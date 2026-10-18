@@ -6,6 +6,7 @@ batch_factory.py  -  02_asset_factory: toplu urun uretimi
 inputs/ icindeki TUM gorselleri (png/jpg/jpeg/webp) okur; her biri icin outputs/<urun_adi>/ altinda:
 
     <urun_adi>_3D_DepthMap_300DPI.png   4000x4000, 8-bit, 300 DPI, dairesel, disi #000000
+    <urun_adi>_3D_DepthMap_INVERTED_300DPI.png   ayni, ama madalyonun ICI ters (255-piksel); disi yine #000000
     01_Wood_Mockup.jpg                  2000x2000  Koyu ceviz
     02_Brass_Mockup.jpg                 2000x2000  Antik pirinc madalyon
     03_Slate_Coaster_Mockup.jpg         2000x2000  Siyah arduvaz coaster + 'SLATE COASTER & WOOD READY' rozeti
@@ -475,6 +476,25 @@ FILES = ["01_Wood_Mockup.jpg", "02_Brass_Mockup.jpg", "03_Slate_Coaster_Mockup.j
          "04_Comparison_Split_Guide.jpg", "05_Listing_Video.mp4"]
 
 
+def inverted_name(name: str) -> str:
+    return f"{name}_3D_DepthMap_INVERTED_300DPI.png"
+
+
+def make_inverted(g: np.ndarray, m: np.ndarray) -> np.ndarray:
+    """Madalyonun ICI ters (255 - ton); cember DISI maske ile saf #000000 kalir."""
+    return np.clip((255.0 - g.astype(F32)) * m + 0.5, 0, 255).astype(np.uint8)
+
+
+def verify_inverted(depth: np.ndarray, inv: np.ndarray) -> None:
+    """Merkez bolgede depth + inverted == 255 (+-1); koseler ve cember disi 0 olmali."""
+    c = slice(800, 3200)
+    s = depth[c, c].astype(np.int16) + inv[c, c].astype(np.int16)
+    if np.abs(s - 255).max() > 1:
+        raise RuntimeError("Inverted dogrulamasi basarisiz: ic bolge 255 - depth degil.")
+    if not all(int(inv[y, x]) == 0 for y in (0, -1) for x in (0, -1)):
+        raise RuntimeError("Inverted dogrulamasi basarisiz: koseler #000000 degil.")
+
+
 def verify_depth(path: Path) -> str:
     with Image.open(path) as im:
         dpi = im.info.get("dpi", (0, 0))
@@ -493,7 +513,7 @@ def process_product(name: str, src: str, out_root: str, no_video: bool, skip_exi
     depth_name = f"{name}_3D_DepthMap_300DPI.png"
     res = {"name": name, "status": "ok", "notes": [], "seconds": 0.0, "error": ""}
     try:
-        need = [depth_name] + FILES[:-1] + ([] if no_video else [FILES[-1]])
+        need = [depth_name, inverted_name(name)] + FILES[:-1] + ([] if no_video else [FILES[-1]])
         if skip_existing and all((out_dir / f).is_file() for f in need):
             res["status"] = "skipped"
             return res
@@ -503,9 +523,15 @@ def process_product(name: str, src: str, out_root: str, no_video: bool, skip_exi
         gray, mask, info = auto_depth_normalizer(bgr, alpha)
         res["notes"].append(info)
 
-        depth = flb.build_depth_map(gray, mask)
+        depth, g_tone, m_full = flb.build_depth_map(gray, mask, return_parts=True)
         flb.save_png(depth, out_dir / depth_name)
         res["notes"].append("depth " + verify_depth(out_dir / depth_name))
+
+        inv = make_inverted(g_tone, m_full)
+        verify_inverted(depth, inv)
+        flb.save_png(inv, out_dir / inverted_name(name))
+        res["notes"].append("inverted " + verify_depth(out_dir / inverted_name(name)))
+        del g_tone, m_full, inv
 
         wood_img = flb.render_wood_mockup(depth)
         flb.save_jpg(wood_img, out_dir / FILES[0])

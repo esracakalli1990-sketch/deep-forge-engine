@@ -8,7 +8,7 @@ bundle_packager.py  -  02_asset_factory: Mega Bundle kapak kolaji + teslimat PDF
     outputs/_MEGA_BUNDLE_NORDIC/
         01_Bundle_Hero_Collage.jpg                  2000x2000 ana kapak (dairesel madalyon dizilimi + rozetler)
         Download_Instructions_and_License.pdf       Letter, tek sayfa: icerik, LightBurn rehberi, lisans, indirme butonu
-        <Bundle>_Files_for_Drive.zip                Drive'a yuklenecek depth map'ler (+ PDF)
+        <Bundle>_*.zip                              depth map'ler (Standard + Inverted); her ZIP <= 20 MB (gerekirse bolunur)
 
 Etsy dijital dosya siniri 20 MB: 5'li bundle ~18 MB, 10'lu ~36 MB. Guvenli yol: ZIP'i Google Drive'a yukle,
 paylasim linkini --download-url ile ver; Etsy'e sadece kucuk PDF yuklenir (tiklanabilir indirme butonu).
@@ -59,6 +59,11 @@ def list_products(outputs: Path, only: list[str] | None = None) -> list[Path]:
 
 def depth_file(prod: Path) -> Path | None:
     hits = sorted(prod.glob("*_3D_DepthMap_300DPI.png"))
+    return hits[0] if hits else None
+
+
+def inverted_file(prod: Path) -> Path | None:
+    hits = sorted(prod.glob("*_3D_DepthMap_INVERTED_300DPI.png"))
     return hits[0] if hits else None
 
 
@@ -233,8 +238,14 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
     # --- 1) Paket ozeti
     section("YOUR PACKAGE")
     n = len(products)
-    para(f"{n} ready-to-engrave design{'s' if n != 1 else ''}. Each file: 4000 x 4000 px  |  300 DPI  |  8-bit grayscale PNG  |  "
-         "circular design on pure black (#000000).")
+    has_inv = all(inverted_file(p) for p in products)
+    if has_inv:
+        para(f"{n} ready-to-engrave design{'s' if n != 1 else ''}, each in TWO versions: STANDARD and INVERTED ({2 * n} PNG files). "
+             "Each file: 4000 x 4000 px  |  300 DPI  |  8-bit grayscale  |  circular design on pure black (#000000).")
+        para("STANDARD: black = deepest, white = highest.   INVERTED: white = deepest, black = highest.", 8.8, "Helvetica-Bold")
+    else:
+        para(f"{n} ready-to-engrave design{'s' if n != 1 else ''}. Each file: 4000 x 4000 px  |  300 DPI  |  8-bit grayscale PNG  |  "
+             "circular design on pure black (#000000).")
     y -= 2
     shown = products[:12]
     half = math.ceil(len(shown) / 2)
@@ -261,7 +272,7 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
     c.drawCentredString(W / 2, y - bh / 2 - 6, "CLICK HERE TO DOWNLOAD YOUR FILES")
     c.linkURL(download_url, (M, y - bh, M + CW, y), relative=0, thickness=0)
     y -= bh + 12
-    para("Opens Google Drive. Choose Download to save everything as one ZIP, then unzip on your computer.", 8.6, color=GREY)
+    para("Opens Google Drive. Download the ZIP file(s) and unzip them on your computer.", 8.6, color=GREY)
     para("Button not working? Copy and paste this link into your browser:", 8.6, color=GREY)
     c.setFillColor(HexColor("#1d4e89"))
     c.setFont("Helvetica", 7.6)
@@ -309,7 +320,11 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
     c.setLineWidth(0.6)
     c.line(M, y, M + CW, y)
     y -= 12
-    para("Black = lowest / deepest, white = highest. If your software engraves white deeper, enable 'Negative Image'.", 8.4, color=GREY)
+    if has_inv:
+        para("Pick the version that matches your software's brightness-to-depth setting (STANDARD: black = deepest, INVERTED: "
+             "white = deepest). No 'Negative Image' toggle needed.", 8.4, color=GREY)
+    else:
+        para("Black = lowest / deepest, white = highest. If your software engraves white deeper, enable 'Negative Image'.", 8.4, color=GREY)
     para("Pure black surrounds the circular design: set the job to the circle so the background is not engraved.", 8.4, color=GREY)
     para("Speed and power depend on your machine, wattage and material. Always test on scrap before the final piece.", 8.4, color=GREY)
     y -= 8
@@ -379,12 +394,57 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
 
 
 # --------------------------------------------------------------------------- #
-def build_zip(products: list[Path], pdf_path: Path, zip_path: Path, root: str) -> None:
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_STORED) as z:     # PNG zaten sikisik
-        for p in products:
-            f = depth_file(p)
+ZIP_LIMIT_MB = 20.0
+
+
+def pack_groups(files: list[Path], limit: int) -> list[list[Path]]:
+    """Sirayi bozmadan, her grup toplam boyutu <= limit olacak sekilde acgozlu paketleme."""
+    groups: list[list[Path]] = []
+    cur: list[Path] = []
+    size = 0
+    for f in files:
+        sz = f.stat().st_size + 512                      # zip basligi payi
+        if cur and size + sz > limit:
+            groups.append(cur)
+            cur, size = [], 0
+        cur.append(f)
+        size += sz
+    if cur:
+        groups.append(cur)
+    return groups
+
+
+def write_zip(path: Path, files: list[Path], root: str) -> None:
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_STORED) as z:         # PNG zaten sikisik
+        for f in files:
             z.write(f, f"{root}/{f.name}")
-        z.write(pdf_path, f"{root}/{PDF_NAME}")
+
+
+def build_zips(products: list[Path], pdf_path: Path, out_dir: Path, root: str, limit_mb: float) -> list[Path]:
+    """Standard + Inverted PNG'leri paketler. Hepsi (+PDF) limite sigiyorsa tek ZIP; sigmiyorsa Standard ve
+    Inverted ayri ZIP'lere (gerekirse Part1, Part2...) bolunur: boylece iki surum de teslim edilir, her dosya <= limit."""
+    limit = int(limit_mb * 1_000_000 * 0.99)
+    std = [depth_file(p) for p in products]
+    inv = [f for f in (inverted_file(p) for p in products) if f]
+    for old in out_dir.glob("*.zip"):
+        old.unlink()
+    outs: list[Path] = []
+    total = sum(f.stat().st_size + 512 for f in std + inv) + pdf_path.stat().st_size
+    if total <= limit:
+        z = out_dir / f"{root}_Files_for_Drive.zip"
+        write_zip(z, std + inv + [pdf_path], root)
+        outs.append(z)
+    else:
+        for label, files in (("STANDARD", std), ("INVERTED", inv)):
+            if not files:
+                continue
+            groups = pack_groups(files, limit)
+            for i, g in enumerate(groups, 1):
+                part = "" if len(groups) == 1 else f"_Part{i}of{len(groups)}"
+                z = out_dir / f"{root}_{label}_Files{part}.zip"
+                write_zip(z, g, root)
+                outs.append(z)
+    return outs
 
 
 def main() -> int:
@@ -394,6 +454,7 @@ def main() -> int:
     ap.add_argument("--bundle-dir", default=None, help="cikti klasor adi (vars: _MEGA_BUNDLE_<TEMANIN ILK KELIMESI>)")
     ap.add_argument("--download-url", default=PLACEHOLDER_URL, help="Google Drive / bulut paylasim linki")
     ap.add_argument("--products", nargs="*", help="sadece bu urun klasorleri (sirayla)")
+    ap.add_argument("--zip-limit-mb", type=float, default=ZIP_LIMIT_MB, help="her ZIP icin ust sinir (Etsy: 20 MB)")
     args = ap.parse_args()
 
     if not args.outputs.is_dir():
@@ -416,10 +477,15 @@ def main() -> int:
     print(f"  kapak    -> {out_dir / COVER_NAME}")
     make_delivery_pdf(products, out_dir / PDF_NAME, title.title().replace("-In-1", "-in-1"), args.download_url)
     print(f"  PDF      -> {out_dir / PDF_NAME}")
-    zip_path = out_dir / f"{safe_name(title)}_Files_for_Drive.zip"
-    build_zip(products, out_dir / PDF_NAME, zip_path, safe_name(title))
-    zmb = zip_path.stat().st_size / 1e6
-    print(f"  ZIP      -> {zip_path} ({zmb:.1f} MB)" + ("  [20 MB ustu: Drive'a yukle, Etsy'e PDF'i ver]" if zmb > 20 else ""))
+    zips = build_zips(products, out_dir / PDF_NAME, out_dir, safe_name(title), args.zip_limit_mb)
+    has_inv = all(inverted_file(p) for p in products)
+    print(f"  ZIP      -> {len(zips)} dosya ({'Standard + Inverted' if has_inv else 'sadece Standard'})")
+    for z in zips:
+        mb = z.stat().st_size / 1e6
+        flag = "OK" if mb <= args.zip_limit_mb else f"!! >{args.zip_limit_mb:.0f} MB (Etsy siniri)"
+        print(f"             {z.name}  {mb:.1f} MB  [{flag}]")
+    pdf_mb = (out_dir / PDF_NAME).stat().st_size / 1e6
+    print(f"  PDF      {pdf_mb:.2f} MB  | Etsy'e yuklenecek dosya sayisini (liste basina sinir) kontrol et: {len(zips) + 1}")
     if args.download_url == PLACEHOLDER_URL:
         print("UYARI: --download-url verilmedi, PDF'teki buton yer tutucu link iceriyor.", file=sys.stderr)
     return 0

@@ -97,8 +97,9 @@ def save_jpg(rgb01: np.ndarray | Image.Image, path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # 1) Depth map
 # --------------------------------------------------------------------------- #
-def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None) -> np.ndarray:
-    """gray -> 4000x4000 8-bit depth map. `mask` (float32 0..1, WORK_SIZE x WORK_SIZE) verilmezse daire."""
+def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None, return_parts: bool = False):
+    """gray -> 4000x4000 8-bit depth map. `mask` (float32 0..1, WORK_SIZE x WORK_SIZE) verilmezse daire.
+    return_parts=True -> (depth, maskesiz ton g uint8, maske m float32): ters (inverted) harita icin."""
     g = center_square(gray)
     interp = cv2.INTER_AREA if g.shape[0] > WORK_SIZE else cv2.INTER_LANCZOS4
     g = cv2.resize(g, (WORK_SIZE, WORK_SIZE), interpolation=interp)
@@ -117,7 +118,8 @@ def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None) -> np.ndar
         m = circle_mask(DEPTH_SIZE)                  # disi saf #000000
     else:
         m = np.clip(cv2.resize(mask, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_CUBIC), 0.0, 1.0)
-    return np.clip(g.astype(F32) * m + 0.5, 0, 255).astype(np.uint8)
+    depth = np.clip(g.astype(F32) * m + 0.5, 0, 255).astype(np.uint8)
+    return (depth, g, m) if return_parts else depth
 
 
 # --------------------------------------------------------------------------- #
