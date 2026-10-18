@@ -97,7 +97,8 @@ def save_jpg(rgb01: np.ndarray | Image.Image, path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # 1) Depth map
 # --------------------------------------------------------------------------- #
-def build_depth_map(gray: np.ndarray) -> np.ndarray:
+def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None) -> np.ndarray:
+    """gray -> 4000x4000 8-bit depth map. `mask` (float32 0..1, WORK_SIZE x WORK_SIZE) verilmezse daire."""
     g = center_square(gray)
     interp = cv2.INTER_AREA if g.shape[0] > WORK_SIZE else cv2.INTER_LANCZOS4
     g = cv2.resize(g, (WORK_SIZE, WORK_SIZE), interpolation=interp)
@@ -107,12 +108,15 @@ def build_depth_map(gray: np.ndarray) -> np.ndarray:
     g = cv2.bilateralFilter(g, 9, 40, 7)
 
     # Daire icindeki tonlari 0-255'e ger (derinlik kontrasti)
-    inside = circle_mask(WORK_SIZE) > 0.5
+    inside = (circle_mask(WORK_SIZE) if mask is None else mask) > 0.5
     lo, hi = np.percentile(g[inside], (0.5, 99.5))
     g = np.clip((g.astype(F32) - lo) / max(hi - lo, 1.0) * 255.0, 0, 255).astype(np.uint8)
 
     g = cv2.resize(g, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_LANCZOS4)
-    m = circle_mask(DEPTH_SIZE)                      # disi saf #000000
+    if mask is None:
+        m = circle_mask(DEPTH_SIZE)                  # disi saf #000000
+    else:
+        m = np.clip(cv2.resize(mask, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_CUBIC), 0.0, 1.0)
     return np.clip(g.astype(F32) * m + 0.5, 0, 255).astype(np.uint8)
 
 
@@ -239,22 +243,31 @@ def draw_tracked(draw, cx: float, cy: float, text: str, font, fill, tracking: fl
         x += draw.textlength(ch, font=font) + tracking
 
 
-def add_badge(img: Image.Image, text: str) -> Image.Image:
-    """Sag alt kose endustriyel rozet/bant."""
+def add_badge(img: Image.Image, text: str, anchor: str = "br", size: int = 36,
+              center_xy: tuple[int, int] | None = None) -> Image.Image:
+    """Endustriyel rozet/bant. anchor: 'br' (sag alt, varsayilan) veya 'center'; center_xy verilirse o noktaya ortalanir."""
     img = img.convert("RGBA")
     W, H = img.size
     probe = ImageDraw.Draw(img)
-    size = 36
+    sc = size / 36.0
+    trk = 2.5 * sc
     while True:
         font = load_font(size)
-        tw = tracked_width(probe, text, font, 2.5)
+        tw = tracked_width(probe, text, font, trk)
         if tw <= W * 0.72 or size <= 16:
             break
         size -= 2
-    pad_x, bh, margin = 54, 92, 64
+    pad_x, bh, margin = int(54 * sc), int(92 * sc), 64
     bw = int(tw + pad_x * 2 + 26)
-    x1, y1 = W - margin, H - margin
-    x0, y0 = x1 - bw, y1 - bh
+    if center_xy is not None:
+        x0, y0 = int(center_xy[0] - bw / 2), int(center_xy[1] - bh / 2)
+        x1, y1 = x0 + bw, y0 + bh
+    elif anchor == "center":
+        x0, y0 = (W - bw) // 2, (H - bh) // 2
+        x1, y1 = x0 + bw, y0 + bh
+    else:
+        x1, y1 = W - margin, H - margin
+        x0, y0 = x1 - bw, y1 - bh
 
     # golge
     sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -270,7 +283,7 @@ def add_badge(img: Image.Image, text: str) -> Image.Image:
         d.ellipse((rx - 3, ry - 3, rx + 3, ry + 3), fill=(60, 40, 14, 255))
     for (rx, ry) in ((x1 - 16, y0 + 16), (x1 - 16, y1 - 16)):
         d.ellipse((rx - 4, ry - 4, rx + 4, ry + 4), fill=(70, 72, 76, 255), outline=(140, 142, 148, 255))
-    draw_tracked(d, (x0 + 26 + x1 - 16) / 2.0, (y0 + y1) / 2.0, text, font, (244, 220, 168, 255), 2.5)
+    draw_tracked(d, (x0 + 26 + x1 - 16) / 2.0, (y0 + y1) / 2.0, text, font, (244, 220, 168, 255), trk)
     return Image.alpha_composite(img, ov)
 
 

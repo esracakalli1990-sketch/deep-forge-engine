@@ -9,9 +9,10 @@ Girdi  : etsy_launch_pack/Viking_Wolf_3D_DepthMap_300DPI.png
 Cikti  : etsy_launch_pack/03_Etsy_Listing_Video.mp4
 
 Zaman cizelgesi
-  0.0 - 3.5 sn : ham depth map; yukaridan asagi lazer cizgisi gecer, gectigi yer ahsap oymaya donusur
-  3.5 - 7.0 sn : ahsap mockup uzerinde yumusak Ken Burns zoom-in (rozet kadrajda kalir)
-  7.0 - 10  sn : crossfade ile antik pirinc madalyon + hafif zoom
+  0.0 - 3.0 sn : ham depth map; yukaridan asagi lazer cizgisi gecer, gectigi yer ahsap oymaya donusur
+  3.0 - 6.5 sn : ahsap mockup uzerinde yumusak Ken Burns zoom-in (rozet kadrajda kalir)
+  6.5 - 10  sn : crossfade ile antik pirinc madalyon (6.5), ardindan siyah arduvaz coaster (8.2) + hafif zoom
+Slate verilmezse (tek kuyruk katmani): pirinc 7.0'da girer.
 
 Kullanim:
     python make_listing_video.py
@@ -45,9 +46,7 @@ DURATION = 10.0
 N_FRAMES = int(round(FPS * DURATION))
 SRC = 1620                     # kaynaklar 1.5x supersample; warp ile 1080'e iner
 
-T_WIPE_END = 3.5
-T_WOOD_END = 7.0
-T_FADE = 1.2                   # crossfade suresi (7.0'de baslar)
+T_WIPE_END = 3.0
 
 # first_launch_builder.render_wood_mockup duzeni (2000 px uzerinde)
 MOCK_S, MOCK_D, MOCK_CY_OFF = 2000, 1400, -40
@@ -103,8 +102,11 @@ def wood_zoom(t: float) -> float:
     return 1.0 + 0.12 * smoothstep((t - T_WIPE_END) / 4.5)
 
 
-def brass_zoom(t: float) -> float:
-    return 1.0 + 0.07 * smoothstep((t - T_WOOD_END) / 3.0)
+def tail_timeline(n_tail: int) -> list[tuple[float, float]]:
+    """Ahsaptan sonraki katmanlar icin (baslangic, crossfade suresi)."""
+    if n_tail <= 1:
+        return [(7.0, 1.2)][:n_tail]
+    return [(6.5, 0.8), (8.2, 0.8)][:n_tail]
 
 
 # --------------------------------------------------------------------------- #
@@ -166,15 +168,17 @@ def render_scan_frame(t: float, idx: int, depth: np.ndarray, wood: np.ndarray) -
 # --------------------------------------------------------------------------- #
 # Kare uretimi
 # --------------------------------------------------------------------------- #
-def render_frame(i: int, depth: np.ndarray, wood: np.ndarray, brass: np.ndarray) -> np.ndarray:
+def render_frame(i: int, depth: np.ndarray, wood: np.ndarray, tail: list[np.ndarray]) -> np.ndarray:
     t = i / FPS
     if t < T_WIPE_END:
         f = render_scan_frame(t, i, view(depth, 1.0), view(wood, 1.0))
     else:
         f = view(wood, wood_zoom(t), WOOD_FOCUS)
-        a = smoothstep((t - T_WOOD_END) / T_FADE)
-        if a > 0.0:
-            f = f * F32(1.0 - a) + view(brass, brass_zoom(t)) * F32(a)
+        for layer, (start, fade) in zip(tail, tail_timeline(len(tail))):
+            a = smoothstep((t - start) / fade)
+            if a > 0.0:
+                z = 1.0 + 0.07 * smoothstep((t - start) / 3.0)
+                f = f * F32(1.0 - a) + view(layer, z) * F32(a)
     return np.clip(f + 0.5, 0, 255).astype(np.uint8)
 
 
@@ -258,28 +262,21 @@ def verify(path: Path) -> str:
 
 
 # --------------------------------------------------------------------------- #
-def main() -> int:
-    ap = argparse.ArgumentParser(description="Etsy listing videosu uretir (10 sn, 1080x1080, 30 FPS).")
-    ap.add_argument("--pack-dir", type=Path, default=DEFAULT_PACK, help="etsy_launch_pack klasoru")
-    args = ap.parse_args()
-    pack: Path = args.pack_dir
-
-    try:
-        depth_gray = read_image(pack / DEPTH_NAME, cv2.IMREAD_GRAYSCALE)
-        wood = to_src(read_image(pack / WOOD_NAME))
-        brass = to_src(read_image(pack / BRASS_NAME))
-    except FileNotFoundError as e:
-        print(f"HATA: {e}\nOnce `python first_launch_builder.py` calistir (klasor: {pack}).", file=sys.stderr)
-        return 1
+def build_video(depth_gray: np.ndarray, wood_bgr: np.ndarray, tail_bgr: list[np.ndarray],
+                out_path: Path, quiet: bool = False) -> str:
+    """Listing videosu uretir. tail_bgr: ahsaptan sonra girecek katmanlar (pirinc[, slate]).
+    Donus: dogrulama ozeti."""
     depth = build_depth_layer(depth_gray)
+    wood = to_src(wood_bgr)
+    tail = [to_src(t) for t in tail_bgr]
 
-    out_path = pack / VIDEO_NAME
     writer = open_writer(out_path)
-    print(f"Kodlayici: {writer.codec}")
+    if not quiet:
+        print(f"Kodlayici: {writer.codec}")
     try:
         for i in range(N_FRAMES):
-            writer.write(render_frame(i, depth, wood, brass))
-            if i % 60 == 0:
+            writer.write(render_frame(i, depth, wood, tail))
+            if not quiet and i % 60 == 0:
                 print(f"  kare {i}/{N_FRAMES}")
         writer.close()
     except Exception:
@@ -288,8 +285,25 @@ def main() -> int:
         except Exception:
             pass
         raise
+    return verify(out_path)
 
-    print(f"Dogrulama: {verify(out_path)}")
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Etsy listing videosu uretir (10 sn, 1080x1080, 30 FPS).")
+    ap.add_argument("--pack-dir", type=Path, default=DEFAULT_PACK, help="etsy_launch_pack klasoru")
+    args = ap.parse_args()
+    pack: Path = args.pack_dir
+
+    try:
+        depth_gray = read_image(pack / DEPTH_NAME, cv2.IMREAD_GRAYSCALE)
+        wood = read_image(pack / WOOD_NAME)
+        brass = read_image(pack / BRASS_NAME)
+    except FileNotFoundError as e:
+        print(f"HATA: {e}\nOnce `python first_launch_builder.py` calistir (klasor: {pack}).", file=sys.stderr)
+        return 1
+
+    out_path = pack / VIDEO_NAME
+    print(f"Dogrulama: {build_video(depth_gray, wood, [brass], out_path)}")
     print(f"Tamam: {out_path}")
     return 0
 

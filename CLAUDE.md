@@ -24,18 +24,20 @@ Ilk urun: "3D Viking Wolf Depth Map" (`input_wolf.png`).
 | # | Modul | Gorev | Durum |
 |---|-------|-------|-------|
 | 1 | `01_scout_engine` | Playwright ile Etsy trend/"gizli sampiyon" radari -> `hot_trends.json` | planli |
-| 2 | `02_asset_factory` | Ham AI gorselinden #000000 arka plan, CLAHE, Bilateral, Unsharp, 4000x4000 300 DPI depth map; bundle icin ReportLab PDF teslimat | planli (cekirdegi `first_launch_builder.py`'de) |
-| 3 | `03_mockup_renderer` | NumPy/OpenCV Sobel/Scharr bump mapping ile ahsap/pirinc/arduvaz mockup + 10 sn lazer-tarama MP4 | kismen (`first_launch_builder.py`, `make_listing_video.py`) |
+| 2 | `02_asset_factory` | Ham AI gorselinden #000000 arka plan, CLAHE, Bilateral, 4000x4000 300 DPI depth map; toplu uretim; bundle kapagi + ReportLab PDF teslimat | **hazir** (`batch_factory.py`, `bundle_packager.py`) |
+| 3 | `03_mockup_renderer` | NumPy/OpenCV Sobel bump mapping ile ahsap/pirinc/arduvaz mockup + karsilastirma gorseli + 10 sn lazer-tarama MP4 | **hazir** (`first_launch_builder.py`, `batch_factory.py`, `make_listing_video.py`) |
 | 4 | `04_seo_listing_brain` | 140 karakter baslik, 13 long-tail etiket, teknik aciklama | planli |
 | 5 | `05_traffic_cannon` | Pinterest + YouTube Shorts/TikTok otomatik yayin koprusu (kullanicinin 30 gunde 9M izlenmeli Shorts otomasyonuna baglanacak) | planli |
 
 Modul klasorleri ihtiyac olunca olusturulur; bos iskelet acilmaz.
 
 ## 4. Depo duzeni (su an)
-- `first_launch_builder.py` — tek dosya: depth map + ahsap mockup + pirinc mockup + logo -> `etsy_launch_pack/`
-- `make_listing_video.py` — 10 sn, 1080x1080, 30 FPS sessiz urun videosu -> `etsy_launch_pack/03_Etsy_Listing_Video.mp4`
+- `first_launch_builder.py` — cekirdek kutuphane + ilk urun scripti: depth map, ahsap/pirinc render, logo, rozet, isik/golge yardimcilari. `batch_factory` ve `bundle_packager` bunu `import` eder.
+- `batch_factory.py` — `inputs/` -> `outputs/<urun>/` toplu hat (depth map, 01 Wood, 02 Brass, 03 Slate, 04 Comparison, 05 Video). Auto-Rim & Background Zeroing burada.
+- `bundle_packager.py` — `outputs/` -> `outputs/_MEGA_BUNDLE_<TEMA>/` (01_Bundle_Hero_Collage.jpg, Download_Instructions_and_License.pdf, Drive ZIP).
+- `make_listing_video.py` — 10 sn, 1080x1080, 30 FPS sessiz video (`build_video()` + tek paket CLI).
 - `requirements.txt`, `.gitignore`
-- `etsy_launch_pack/`, `input_wolf.png`, `*.mp4` git'e girmez (uretilen/buyuk dosyalar).
+- `inputs/`, `outputs/`, `etsy_launch_pack/`, `input_wolf.png`, `*.mp4` git'e girmez (girdi/uretilen buyuk dosyalar).
 
 Gelistirme dali: `claude/keen-goodall-bpjwvb`. PR sadece kullanici isteyince acilir.
 
@@ -51,8 +53,13 @@ Gelistirme dali: `claude/keen-goodall-bpjwvb`. PR sadece kullanici isteyince aci
 - **Isik modeli (mockup):** sol-ust 45 derece, `L=(-0.5,-0.5,0.7071)`, goruntu koordinati x sag / y asagi, normal `n=(-gx,-gy,1)`, Sobel ksize=3 /8.
 - **Ahsap mockup:** 4 mm oyma ~ 24 px yukseklik olcegi; AO + golge isin izleme + color burn. Procedural ceviz (NumPy fbm), harici doku yok.
 - **Pirinc mockup:** 62 px yukseklik olcegi, patina + specular (keskin ^90 + genis ^14), koyu antrasit zemin, drop shadow.
+- **Auto-Rim & Background Zeroing (`batch_factory.auto_depth_normalizer`):** 4 kosedeki 20x20 px ortalama parlaklik zemini (siyah/beyaz/gri) belirler; esik yalnizca kose istatistiginden gelir. Madalyon cemberi: on plan konturu -> robust (aykiri atan) cember uydurma -> radyal gradyan rafinesi (en dis guclu kenar; golge/halo'yu yok sayar) -> yedek HoughCircles. Zemin duz degilse veya cember bulunamazsa guvenli merkez dairesel maske (r=0.49*kisa kenar). Cember disi 2-3 px yumusak kenarla saf #000000. **Madalyonun ici asla ters cevrilmez** (yuksek = acik, cukur = koyu). Dogruluk testi: beyaz/gri/golgeli zeminde +-1 px.
 - **Mockup duzeni:** 2000x2000; tasarim cemberi capi 1400, merkez (1000, 960). Video script'i bu duzene bagimli — degisirse ikisini birlikte guncelle.
-- **Etsy rozeti:** "3D DEPTH MAP | 300 DPI PNG | LIGHTBURN & CNC READY".
+- **Rozetler:** ahsap "3D DEPTH MAP | 300 DPI PNG | LIGHTBURN & CNC READY"; slate "SLATE COASTER & WOOD READY"; bundle "<N>-IN-1 <TEMA> MEGA BUNDLE" + "300 DPI 3D DEPTH MAPS | COMMERCIAL USE".
+- **Slate mockup:** koyu mat arduvaz coaster (duzensiz kenar, kalinlik), sicak gri beton zemin; depth map yalnizca ACIK kabarti yerlerde gumusi-beyaz "etch" (mid-tonlar koyu kalir).
+- **Karsilastirma gorseli:** solda ham depth map (uzun panel), sagda ahsap + pirinc detay kirpimi, ortada dikey altin lazer cizgisi, altta 3 istatistik karti + "4000x4000px 300 DPI | LightBurn, Glowforge, xTool & CNC Ready" bandi.
+- **Video zaman cizelgesi:** 0-3 sn lazer tarama (depth -> ahsap), 3-6.5 sn ahsap Ken Burns (odak sag alt: rozet kadrajda kalir), 6.5 pirinc, 8.2 slate crossfade (0.8 sn). Kodlayici: ffmpeg libx264 yuv420p.
+- **Bundle PDF:** reportlab, Letter, tek sayfa, tiklanabilir "CLICK HERE TO DOWNLOAD YOUR FILES" butonu (Drive linki `--download-url`), LightBurn tablosu (3D Slice / Jarvis / Stucki), ticari kullanim lisansi.
 
 ## 7. Etsy / uyumluluk notlari (dogrulanacak)
 - Dijital dosya basina 20 MB siniri (depth map ~3.6 MB, sorun yok).
@@ -60,9 +67,13 @@ Gelistirme dali: `claude/keen-goodall-bpjwvb`. PR sadece kullanici isteyince aci
 - `01_scout_engine` Etsy'yi kazir: Etsy kullanim sartlari otomatik kazimayi kisitlayabilir. Yazmadan once oran sinirlama (rate limit), robots.txt ve resmi Etsy Open API alternatifi degerlendirilecek; hesap/magaza riskini kullaniciya acikca soyle.
 
 ## 8. Tamamlananlar
-- [x] `first_launch_builder.py` (4 dosya, kurt gorseliyle dogrulandi, kullanici makinesinde calisti)
-- [x] `make_listing_video.py` (10 sn lazer-tarama listing videosu)
+- [x] `first_launch_builder.py` (kurt gorseliyle dogrulandi, kullanici makinesinde calisti)
+- [x] `make_listing_video.py` (kullanici onayi: "kusursuz")
+- [x] `batch_factory.py` — toplu hat, Auto-Rim & Background Zeroing, slate + comparison, video baglantisi
+- [x] `bundle_packager.py` — Hero Collage + teslimat PDF + Drive ZIP
 
-## 9. Siradaki isler
-- Batch modu (`inputs/` klasoru, urun basina cikti klasoru) — kullanici onayiyla.
-- `02_asset_factory`, `04_seo_listing_brain`, `05_traffic_cannon`, `01_scout_engine`.
+## 9. Siradaki isler / acik noktalar
+- Gercek 5'li Nordic seti (`01_Fenrir_Wolf` ... `05_Odin_Allfather`) kullanicinin makinesinde `inputs/` ile calistirilacak; sonuclar gorsel QA'ya girecek.
+- Drive linki: ZIP Drive'a yuklenip `--download-url` ile PDF'e gomulecek (5'li paket ~18 MB, 10'lu ~36 MB).
+- `04_seo_listing_brain` (baslik/etiket/aciklama), `05_traffic_cannon`, `01_scout_engine` (Etsy kazima riski: once API/harici kaynak).
+- Lisans metni ve LightBurn ayar tavsiyeleri genel baslangic noktalaridir; yayindan once kullanici gozden gecirmeli.
