@@ -84,3 +84,24 @@ Gelistirme dali: `claude/keen-goodall-bpjwvb`. PR sadece kullanici isteyince aci
 - Kimlik onayindan sonra listing'ler: `ALL_LISTINGS_READY.md`'den yapistir; Etsy dosya sayisi/boyut limitlerini ve AI beyan alanlarini editorde dogrula.
 - `05_traffic_cannon`, `01_scout_engine` (Etsy kazima riski: once API/harici kaynak).
 - Lisans metni ve LightBurn ayar tavsiyeleri genel baslangic noktalaridir; yayindan once kullanici gozden gecirmeli.
+
+## 10. KALDIGIMIZ YER (oturum durumu - en son guncelleme: Etsy kimlik onayi bekleniyor)
+**Durum:** Magaza kimlik onayinda; teknik hazirlik tamam, yayin beklemede. Kullanici onay gelince "kaldigimiz yerden devam" diyecek.
+
+**Hazir olan (hepsi bu dalda, test edildi):**
+- Uretim hatti: `batch_factory.py` (Standard + Inverted depth map, 01 Wood, 02 Brass, 03 Slate, 04 Comparison, 05 Video), `bundle_packager.py` (Hero Collage, PDF, boyut kontrollu ZIP), `seo_generator.py` (5 tekil + 1 bundle listing), `make_listing_video.py`.
+- Test sadece kurt gorselinin simule kopyalariyla yapildi (siyah/gri/beyaz zemin). **Gercek 5'li Nordic seti hic islenmedi.**
+
+**Onay gelince sirayla:**
+1. Kullanici gercek gorselleri `inputs/` icine koyar (`01_Fenrir_Wolf.png`, `02_Valkyrie_Warrior.png`, `03_Yggdrasil_Tree.png`, `04_Thor_Mjolnir.png`, `05_Odin_Allfather.png`; Odin'in zemini beyaz) ve `python batch_factory.py` calistirir. Ozet satirlarinda "madalyon bulundu / zemin" bilgisini kontrol et; "bulunamadi -> guvenli merkez daire" ciktiysa o urunun depth map'ine gozle bak.
+2. Kullanici mockup/slate/comparison ciktilarini sohbete yukler -> birlikte son gorsel QA (ozellikle Odin beyaz-zemin ve kenar halo kontrolu).
+3. ZIP'ler Google Drive'a yuklenir -> `python bundle_packager.py --download-url "<Drive linki>"` -> `python seo_generator.py`.
+4. `ALL_LISTINGS_READY.md`'den listing'ler Etsy'ye yapistirilir (Etsy dosya sayisi/boyut limiti ve AI beyan alanlari editorde dogrulanir).
+
+**Bekleyen kullanici kararlari:**
+- Bundle fiyati: $12.99 (%48 tasarruf) mi, $12.49 (tam %50) mu? (`--bundle-price`)
+- Ilk gercek calistirmadan sonra gelen gorsel QA geri bildirimine gore ince ayar.
+
+**Siradaki modul adaylari:** `05_traffic_cannon` (Pinterest + Shorts/TikTok yayin koprusu; kullanicinin mevcut 9M izlenmeli Shorts otomasyonuna baglanacak), `01_scout_engine` (YALNIZCA izole/resmi API veya harici veri kaynagiyla; kimlik onayi surecinde yerel IP'den Etsy kazima YAPILMAYACAK - kullanici ile mutabik).
+
+**Kullanici tercihleri:** Turkce konusur; "eksiksiz, uctan uca, test edilmis" ister; once calistirip kanitla raporla; PR sadece istenirse; bu oturumda Claude kullanicinin bilgisayarinda komut CALISTIRAMAZ (bulut ortami) - degisiklik push edilir, kullanici kendi makinesinde calistirir.
