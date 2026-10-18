@@ -1,0 +1,5 @@
+opencv-python
+numpy
+Pillow
+# Opsiyonel: sistemde ffmpeg yoksa video icin H.264 destekli ffmpeg getirir
+imageio-ffmpeg
