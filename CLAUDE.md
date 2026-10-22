@@ -1,107 +1,37 @@
-# CLAUDE.md — Proje DEEP-FORGE (ForgeDepthStudio)
+# CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
-Bu dosya her oturumda baglami korumak icin referanstir. Degisiklik olursa guncelle.
+Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
-## 1. Rol ve komuta zinciri
-- **Gemini Argon:** stratejik beyin (pazar istihbarati, algoritma, urun stratejisi, mimari yonlendirme).
-- **Kurucu (kullanici):** operasyon lideri, fiziksel uygulayici. Sifir sermaye, vardiya disi zamaninda calisiyor.
-- **Claude (sen):** Bas Yazilim / Goruntu Isleme (Computer Vision) / Otomasyon muhendisi. Kodlama, goruntu isleme, veri kazima ve otomasyon.
+## 1. Roller
+- **Gemini Argon:** strateji (pazar, algoritma, urun). **Kurucu (kullanici):** operasyon lideri, fiziksel uygulayici (Etsy, hesaplar, kendi bilgisayarinda calistirma).
+- **Claude (ben): YONETICI + BAS MUHENDIS.** Planlar, onceliklendirir, risk/ToS cakismalarini kodlamadan ONCE yuzune soyler, kodlar, calistirip dogrular, durustce raporlar. Kirmizi cizgi: yarim kod yok; uctan uca, test edilmis teslim.
+- Dil: Turkce yanit; kod/dosya adi Ingilizce. Token: kisa raporlar, kullanicidan gereksiz ekran goruntusu isteme (tek seferde kopyala-yapistir sablon + tam kod).
+- Bu oturum bulut ortaminda: kullanicinin bilgisayarinda komut CALISTIRAMAZ; push eder, kullanici calistirir. Playwright/hesap girisi gerektiren isler burada test EDILEMEZ (soyle). PR sadece istenirse. Dal: `claude/keen-goodall-bpjwvb`.
 
-**Kirmizi cizgi:** Yarim kod, "burayi sen doldur" ve kitabi tavsiye yok. Her teslim: eksiksiz, uctan uca calisan, test edilmis, hatasiz, moduler.
-Kullanici Turkce yazar; yanitlar Turkce, kod/degisken/dosya adlari Ingilizce.
+## 2. Proje
+Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletmelerine B2B dijital uretim hammaddesi (sifir stok/kargo).
+- **Sutun 1 AKTIF:** 3D depth map (Standard + Inverted PNG, 4000x4000, 300 DPI, 8-bit, disi #000000).
+- Sutun 2 planli: 20oz tumbler seamless wrap + DTF paketleri. Sutun 3 planli: lazer/CNC maliyet tablolari (Sheets + Apps Script).
+- **Durum:** magaza canli, 6 ilan Active ($4.99 x5: Fenrir, Yggdrasil, Valkyrie, Vegvisir, Odin; $12.99 5-in-1 bundle). **72 saat isindirma:** yeni ilan YOK; arka planda trafik/istihbarat.
 
-## 2. Is modeli
-Etsy'de **"ForgeDepthStudio"** adiyla fiziksel uretim yapan kucuk isletmelere (lazer kazima atolyeleri, CNC router, Fiber/Galvo lazer, Sublimation/DTF) **B2B dijital uretim hammaddesi** satiyoruz. %100 dijital, sifir kargo, sifir stok.
+## 3. Kirmizi cizgiler
+1. VPN/proxy yok; temiz yerel IP + sabit Chrome profili. Isindirma: tek seferde 50 urun yok.
+2. **Etsy yukleme:** tekli ilan -> Photos: 4 JPG (01 Wood kapak, 04 Comparison, 02 Brass, 03 Slate) + 05 video; **Digital files: SADECE 2 PNG** (Standard + Inverted), maks 5 dosya. Bundle -> Digital files: **SADECE teslimat PDF'i**; ZIP'ler Google Drive'da (herkes goruntuleyebilir).
+3. AI beyani: "I did" -> "A finished product" -> "2020-2026" -> "Created by me with the help of an AI generator".
+4. Pazarlamada kanitlanamayan iddia yok (ornek: makineye ozel Z-ekseni kalibrasyonu YAPMIYORUZ; genel 8-bit depth map).
 
-Urun gruplari:
-1. **3D Illusion Laser Engraving Depth Maps** — 8/16-bit grayscale PNG, 4000x4000 px, 300 DPI (LightBurn, EZCAD, Glowforge, xTool; ahsap/pirinc/arduvaz) + mega paketler (bundle).
-2. **Seamless Tumbler Wraps & ticari uretim paketleri** — kusursuz birlesimli, 300 DPI baski dosyalari.
-
-Durum: Etsy magazasi acildi, kimlik dogrulama (Persona / Pending Review) bekleniyor.
-Ilk urun: "3D Viking Wolf Depth Map" (`input_wolf.png`).
-
-## 3. 5 modullu otonom mimari
-| # | Modul | Gorev | Durum |
-|---|-------|-------|-------|
-| 1 | `01_scout_engine` | Playwright ile Etsy trend/"gizli sampiyon" radari -> `hot_trends.json` | planli |
-| 2 | `02_asset_factory` | Ham AI gorselinden #000000 arka plan, CLAHE, Bilateral, 4000x4000 300 DPI depth map; toplu uretim; bundle kapagi + ReportLab PDF teslimat | **hazir** (`batch_factory.py`, `bundle_packager.py`) |
-| 3 | `03_mockup_renderer` | NumPy/OpenCV Sobel bump mapping ile ahsap/pirinc/arduvaz mockup + karsilastirma gorseli + 10 sn lazer-tarama MP4 | **hazir** (`first_launch_builder.py`, `batch_factory.py`, `make_listing_video.py`) |
-| 4 | `04_seo_listing_brain` | 130-140 karakter baslik, 13 long-tail etiket (<=20 kr), teknik aciklama, AI beyani, fiyat | **hazir** (`seo_generator.py`) |
-| 5 | `05_traffic_cannon` | Pinterest + YouTube Shorts/TikTok otomatik yayin koprusu (kullanicinin 30 gunde 9M izlenmeli Shorts otomasyonuna baglanacak) | planli |
-
-Modul klasorleri ihtiyac olunca olusturulur; bos iskelet acilmaz.
-
-## 4. Depo duzeni (su an)
-- `first_launch_builder.py` — cekirdek kutuphane + ilk urun scripti: depth map, ahsap/pirinc render, logo, rozet, isik/golge yardimcilari. `batch_factory` ve `bundle_packager` bunu `import` eder.
-- `batch_factory.py` — `inputs/` -> `outputs/<urun>/` toplu hat (depth map, 01 Wood, 02 Brass, 03 Slate, 04 Comparison, 05 Video). Auto-Rim & Background Zeroing burada.
-- `bundle_packager.py` — `outputs/` -> `outputs/_MEGA_BUNDLE_<TEMA>/` (01_Bundle_Hero_Collage.jpg, Download_Instructions_and_License.pdf, Drive ZIP).
-- `seo_generator.py` — `outputs/` -> her urun/bundle klasorune `ETSY_LISTING_SEO.txt` + `outputs/ALL_LISTINGS_READY.md` (baslik/etiket/aciklama/fiyat; kodda `assert` ile dogrulanir).
-- `make_listing_video.py` — 10 sn, 1080x1080, 30 FPS sessiz video (`build_video()` + tek paket CLI).
-- `requirements.txt`, `.gitignore`
-- `inputs/`, `outputs/`, `etsy_launch_pack/`, `input_wolf.png`, `*.mp4` git'e girmez (girdi/uretilen buyuk dosyalar).
-
-Gelistirme dali: `claude/keen-goodall-bpjwvb`. PR sadece kullanici isteyince acilir.
+## 4. Depo (bulut) ve kullanici PC'si
+- Repoda: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`. `inputs/ outputs/ *.mp4` git disi.
+- Kullanicinin `forge/` klasorunde ek olarak `traffic_cannon.py` var (9:16 Shorts + 2:3 Pinterest uretir) — **repoda YOK**, muhendis yazdi; yonetmek icin repoya alinmali.
+- Gercek set: 01_Fenrir_Wolf, 02_Yggdrasil_Tree_of_Life, 03_Valkyrie_Warrior, 04_Vegvisir_Viking_Compass, 05_Odin_Allfather (+06 bundle). `seo_generator` profilleri Thor icin yazildi; Vegvisir ve Yggdrasil ad degisikligi icin profil guncellenmeli.
 
 ## 5. Calisma kurallari
-1. Kod toplu isleme (batch) uyumlu, `try/except` ile hata yakalayan, az bagimlilikli, hizli ve temiz olsun. Tek goruntu icin degil, onlarca urun icin tasarla.
-2. Bagimliliklar: `opencv-python`, `numpy`, `Pillow` (cekirdek). Eklemeden once gerekce ver; agir AI modeli indirme yok. Video icin sistem `ffmpeg` (veya `imageio-ffmpeg`) kullanilir.
-3. Her scripti yazdiktan sonra **calistir ve dogrula** (cikti boyutu, sure, gorsel kontrol); sonucu durustce raporla.
-4. Pathlib, `Path(__file__).resolve().parent` tabanli yollar; Windows/Mac/Linux uyumlu; unicode yollar icin `np.fromfile` + `cv2.imdecode`.
-5. Moduller ayni cikti sozlesmesini paylasir: urun basina klasor, standart dosya adlari.
+Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; ffmpeg video). Pathlib + `Path(__file__).parent`; unicode yol icin `np.fromfile`+`imdecode`. Yazdigini calistir ve dogrula; sonucu durustce raporla. Moduller ayni cikti sozlesmesini kullanir.
 
-## 6. Teknik sozlesmeler (degistirme, gerekirse haber ver)
-- **Depth map (Standard):** 8-bit `L`, 4000x4000, 300 DPI (`pHYs`), dairesel maske, disi saf `#000000`. Ton: beyaz = yuksek/kesilmemis, siyah = en derin. Islem: gri -> CLAHE(clipLimit=3.0, 8x8) -> Bilateral x2 -> persentil germe -> Lanczos4 -> maske.
-- **Isik modeli (mockup):** sol-ust 45 derece, `L=(-0.5,-0.5,0.7071)`, goruntu koordinati x sag / y asagi, normal `n=(-gx,-gy,1)`, Sobel ksize=3 /8.
-- **Ahsap mockup:** 4 mm oyma ~ 24 px yukseklik olcegi; AO + golge isin izleme + color burn. Procedural ceviz (NumPy fbm), harici doku yok.
-- **Pirinc mockup:** 62 px yukseklik olcegi, patina + specular (keskin ^90 + genis ^14), koyu antrasit zemin, drop shadow.
-- **Auto-Rim & Background Zeroing (`batch_factory.auto_depth_normalizer`):** 4 kosedeki 20x20 px ortalama parlaklik zemini (siyah/beyaz/gri) belirler; esik yalnizca kose istatistiginden gelir. Madalyon cemberi: on plan konturu -> robust (aykiri atan) cember uydurma -> radyal gradyan rafinesi (en dis guclu kenar; golge/halo'yu yok sayar) -> yedek HoughCircles. Zemin duz degilse veya cember bulunamazsa guvenli merkez dairesel maske (r=0.49*kisa kenar). Cember disi 2-3 px yumusak kenarla saf #000000. **Madalyonun ici asla ters cevrilmez** (yuksek = acik, cukur = koyu). Dogruluk testi: beyaz/gri/golgeli zeminde +-1 px.
-- **Inverted depth map:** `<urun>_3D_DepthMap_INVERTED_300DPI.png` — madalyon ICI `255 - ton` (beyaz = en derin), cember DISI maske ile saf #000000. Dogrulama kodda: ic bolgede standart + inverted = 255, koseler 0. Mockup'lar yalniz Standard'tan uretilir.
-- **ZIP boyut kurali (`bundle_packager.build_zips`):** her ZIP <= 20 MB (`--zip-limit-mb`). Standard + Inverted + PDF limite sigiyorsa tek ZIP; sigmiyorsa Standard ve Inverted ayri ZIP'lere (gerekirse Part1..n) bolunur — iki surum de teslim edilir. 5'li bundle: 2 ZIP x ~17.7 MB + PDF.
-- **SEO kurallari (`seo_generator.py`):** baslik 130-140 kr, `intent` ifadesiyle acilir (LightBurn / Fiber Laser Coin / Slate Coaster / CNC Router / xTool D1 P2 rotasyonu), ilk 40 kr ve ilk 3 kelime urunler arasinda tekrar etmez, urun adi basligta bir kez gecer; tam 13 etiket, her biri <=20 kr ve >=2 kelime, tekrarsiz. AI beyani: "Designed with AI-assisted sculpting and precision-calibrated via custom depth-mapping algorithms for laser/CNC relief." Fiyat: tekil $4.99, 5'li bundle $12.99 (5 x $4.99 = $24.95 -> %48 tasarruf; tam %50 icin $12.49).
-- **Mockup duzeni:** 2000x2000; tasarim cemberi capi 1400, merkez (1000, 960). Video script'i bu duzene bagimli — degisirse ikisini birlikte guncelle.
-- **Rozetler:** ahsap "3D DEPTH MAP | 300 DPI PNG | LIGHTBURN & CNC READY"; slate "SLATE COASTER & WOOD READY"; bundle "<N>-IN-1 <TEMA> MEGA BUNDLE" + "300 DPI 3D DEPTH MAPS | COMMERCIAL USE".
-- **Slate mockup:** koyu mat arduvaz coaster (duzensiz kenar, kalinlik), sicak gri beton zemin; depth map yalnizca ACIK kabarti yerlerde gumusi-beyaz "etch" (mid-tonlar koyu kalir).
-- **Karsilastirma gorseli:** solda ham depth map (uzun panel), sagda ahsap + pirinc detay kirpimi, ortada dikey altin lazer cizgisi, altta 3 istatistik karti + "4000x4000px 300 DPI | LightBurn, Glowforge, xTool & CNC Ready" bandi.
-- **Video zaman cizelgesi:** 0-3 sn lazer tarama (depth -> ahsap), 3-6.5 sn ahsap Ken Burns (odak sag alt: rozet kadrajda kalir), 6.5 pirinc, 8.2 slate crossfade (0.8 sn). Kodlayici: ffmpeg libx264 yuv420p.
-- **Bundle PDF:** reportlab, Letter, tek sayfa, tiklanabilir "CLICK HERE TO DOWNLOAD YOUR FILES" butonu (Drive linki `--download-url`), LightBurn tablosu (3D Slice / Jarvis / Stucki), ticari kullanim lisansi.
-
-## 7. Etsy / uyumluluk notlari (dogrulanacak)
-- Dijital dosya basina 20 MB siniri (depth map ~3.6 MB, sorun yok).
-- Yapay zeka ile uretilen gorsellerin Etsy'nin "yaratim sureci / AI" beyan kurallarina uygun belirtilmesi gerekir.
-- `01_scout_engine` Etsy'yi kazir: Etsy kullanim sartlari otomatik kazimayi kisitlayabilir. Yazmadan once oran sinirlama (rate limit), robots.txt ve resmi Etsy Open API alternatifi degerlendirilecek; hesap/magaza riskini kullaniciya acikca soyle.
-
-## 8. Tamamlananlar
-- [x] `first_launch_builder.py` (kurt gorseliyle dogrulandi, kullanici makinesinde calisti)
-- [x] `make_listing_video.py` (kullanici onayi: "kusursuz")
-- [x] `batch_factory.py` — toplu hat, Auto-Rim & Background Zeroing, slate + comparison, video baglantisi
-- [x] `bundle_packager.py` — Hero Collage + teslimat PDF + boyut kontrollu ZIP (Standard + Inverted)
-- [x] Inverted depth map (`batch_factory.py`) — dogrulandi
-- [x] `seo_generator.py` — 5 tekil + 1 bundle listing, `ALL_LISTINGS_READY.md`
-
-## 9. Siradaki isler / acik noktalar
-- Gercek 5'li Nordic seti (`01_Fenrir_Wolf` ... `05_Odin_Allfather`) kullanicinin makinesinde `inputs/` ile calistirilacak; sonuclar gorsel QA'ya girecek.
-- Drive linki: ZIP Drive'a yuklenip `--download-url` ile PDF'e gomulecek (5'li paket ~18 MB, 10'lu ~36 MB).
-- Kimlik onayindan sonra listing'ler: `ALL_LISTINGS_READY.md`'den yapistir; Etsy dosya sayisi/boyut limitlerini ve AI beyan alanlarini editorde dogrula.
-- `05_traffic_cannon`, `01_scout_engine` (Etsy kazima riski: once API/harici kaynak).
-- Lisans metni ve LightBurn ayar tavsiyeleri genel baslangic noktalaridir; yayindan once kullanici gozden gecirmeli.
-
-## 10. KALDIGIMIZ YER (oturum durumu - en son guncelleme: Etsy kimlik onayi bekleniyor)
-**Durum:** Magaza kimlik onayinda; teknik hazirlik tamam, yayin beklemede. Kullanici onay gelince "kaldigimiz yerden devam" diyecek.
-
-**Hazir olan (hepsi bu dalda, test edildi):**
-- Uretim hatti: `batch_factory.py` (Standard + Inverted depth map, 01 Wood, 02 Brass, 03 Slate, 04 Comparison, 05 Video), `bundle_packager.py` (Hero Collage, PDF, boyut kontrollu ZIP), `seo_generator.py` (5 tekil + 1 bundle listing), `make_listing_video.py`.
-- Test sadece kurt gorselinin simule kopyalariyla yapildi (siyah/gri/beyaz zemin). **Gercek 5'li Nordic seti hic islenmedi.**
-
-**Onay gelince sirayla:**
-1. Kullanici gercek gorselleri `inputs/` icine koyar (`01_Fenrir_Wolf.png`, `02_Valkyrie_Warrior.png`, `03_Yggdrasil_Tree.png`, `04_Thor_Mjolnir.png`, `05_Odin_Allfather.png`; Odin'in zemini beyaz) ve `python batch_factory.py` calistirir. Ozet satirlarinda "madalyon bulundu / zemin" bilgisini kontrol et; "bulunamadi -> guvenli merkez daire" ciktiysa o urunun depth map'ine gozle bak.
-2. Kullanici mockup/slate/comparison ciktilarini sohbete yukler -> birlikte son gorsel QA (ozellikle Odin beyaz-zemin ve kenar halo kontrolu).
-3. ZIP'ler Google Drive'a yuklenir -> `python bundle_packager.py --download-url "<Drive linki>"` -> `python seo_generator.py`.
-4. `ALL_LISTINGS_READY.md`'den listing'ler Etsy'ye yapistirilir (Etsy dosya sayisi/boyut limiti ve AI beyan alanlari editorde dogrulanir).
-
-**Bekleyen kullanici kararlari:**
-- Bundle fiyati: $12.99 (%48 tasarruf) mi, $12.49 (tam %50) mu? (`--bundle-price`)
-- Ilk gercek calistirmadan sonra gelen gorsel QA geri bildirimine gore ince ayar.
-
-**Siradaki modul adaylari:** `05_traffic_cannon` (Pinterest + Shorts/TikTok yayin koprusu; kullanicinin mevcut 9M izlenmeli Shorts otomasyonuna baglanacak), `01_scout_engine` (YALNIZCA izole/resmi API veya harici veri kaynagiyla; kimlik onayi surecinde yerel IP'den Etsy kazima YAPILMAYACAK - kullanici ile mutabik).
-
-**Kullanici tercihleri:** Turkce konusur; "eksiksiz, uctan uca, test edilmis" ister; once calistirip kanitla raporla; PR sadece istenirse; bu oturumda Claude kullanicinin bilgisayarinda komut CALISTIRAMAZ (bulut ortami) - degisiklik push edilir, kullanici kendi makinesinde calistirir.
+## 6. Yol haritasi (yonetici durumu)
+Tamam: Faz 1-2 (magaza, 6 ilan, uretim fabrikasi, traffic_cannon). Sirada (Handover Bolum 6): Adim 1 `auto_publisher.py`, Adim 2 `lead_magnet_builder.py`, Adim 3 `scout_engine.py`.
+**Acik yonetici bulgulari (kodlamadan once karar gerekir):**
+- Adim 1: UI-otomasyonu (Playwright) Pinterest/YouTube/TikTok ToS ve hesap riski tasir; resmi API (YouTube Data API, Pinterest API v5) once degerlendirilecek; kullanicinin mevcut Shorts otomasyonu yeniden kullanilabilir.
+- Adim 3: Etsy'yi yerel IP + satici Chrome profiliyle kazimak magaza askiya alma riski; eski mutabakat: kazima yok / izole ya da resmi kaynak.
+- Adim 2: forum/grup self-promo kurallari; "Z-ekseni kalibrasyonlu" iddiasi dogru degil -> metin duzeltilecek.
+- `seo_generator.py`: bundle "FILES TO UPLOAD" ve aciklamasi ZIP'leri listeliyor; kural 3.2 ile celisiyor -> bundle icin sadece PDF + Drive linki olacak sekilde duzeltilecek.
