@@ -29,9 +29,6 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; ffmpeg video). Pathlib + `Path(__file__).parent`; unicode yol icin `np.fromfile`+`imdecode`. Yazdigini calistir ve dogrula; sonucu durustce raporla. Moduller ayni cikti sozlesmesini kullanir.
 
 ## 6. Yol haritasi (yonetici durumu)
-Tamam: Faz 1-2 (magaza, 6 ilan, uretim fabrikasi, traffic_cannon). Sirada (Handover Bolum 6): Adim 1 `auto_publisher.py`, Adim 2 `lead_magnet_builder.py`, Adim 3 `scout_engine.py`.
-**Acik yonetici bulgulari (kodlamadan once karar gerekir):**
-- Adim 1: UI-otomasyonu (Playwright) Pinterest/YouTube/TikTok ToS ve hesap riski tasir; resmi API (YouTube Data API, Pinterest API v5) once degerlendirilecek; kullanicinin mevcut Shorts otomasyonu yeniden kullanilabilir.
-- Adim 3: Etsy'yi yerel IP + satici Chrome profiliyle kazimak magaza askiya alma riski; eski mutabakat: kazima yok / izole ya da resmi kaynak.
-- Adim 2: forum/grup self-promo kurallari; "Z-ekseni kalibrasyonlu" iddiasi dogru degil -> metin duzeltilecek.
-- `seo_generator.py`: bundle "FILES TO UPLOAD" ve aciklamasi ZIP'leri listeliyor; kural 3.2 ile celisiyor -> bundle icin sadece PDF + Drive linki olacak sekilde duzeltilecek.
+Tamam: Faz 1-2 (magaza, 6 ilan, uretim fabrikasi, traffic_cannon). **Guncel plan ve bulgular: `docs/AUDIT_AND_WORKPLAN.md`** (Faz A dogruluk/hijyen -> B urun kalitesi -> C uyumlu trafik -> D buyume -> E yeni sutunlar).
+Kritik bulgular: K1 isik depth'e gomulu (dis halka %41 sapma; CNC vaadi riskli), K2 "calibrated" iddialari, K3 UI-bot ToS riski, K4 Etsy kazima riski, Y1 Vegvisir SEO hatasi, Y2 repo != kullanici forge/.
+Kurucu kararlari bekleniyor (rapor Bolum 8): Kural 3.2 revizyonu, Adim 1/3 yontemi, konumlandirma, Faz A onayi.
