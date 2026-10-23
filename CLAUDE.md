@@ -16,19 +16,20 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 
 ## 3. Kirmizi cizgiler
 1. VPN/proxy yok; temiz yerel IP + sabit Chrome profili. Isindirma: tek seferde 50 urun yok.
-2. **Etsy yukleme:** tekli ilan -> Photos: 4 JPG (01 Wood kapak, 04 Comparison, 02 Brass, 03 Slate) + 05 video; **Digital files: SADECE 2 PNG** (Standard + Inverted), maks 5 dosya. Bundle -> Digital files: **SADECE teslimat PDF'i**; ZIP'ler Google Drive'da (herkes goruntuleyebilir).
+2. **Etsy yukleme:** tekli ilan -> Photos: 4 JPG (01 Wood kapak, 04 Comparison, 02 Brass, 03 Slate) + 05 video; **Digital files: SADECE 2 PNG** (Standard + Inverted), maks 5 dosya. **Bundle (2026-10-23 kurucu karari, Kural 3.2 revize):** Digital files = ZIP parcalari + teslimat PDF'i dogrudan Etsy'de (her biri <=20 MB, toplam <=5; `bundle_packager` varsayilan `--delivery etsy`). Drive yalniz 5 dosyaya sigmayan buyuk paketler icin (`--delivery drive --download-url`).
 3. AI beyani: "I did" -> "A finished product" -> "2020-2026" -> "Created by me with the help of an AI generator".
-4. Pazarlamada kanitlanamayan iddia yok (ornek: makineye ozel Z-ekseni kalibrasyonu YAPMIYORUZ; genel 8-bit depth map).
+4. Pazarlamada kanitlanamayan iddia yok ("calibrated" yok; makineye ozel Z-ekseni kalibrasyonu YAPMIYORUZ). **Lazer odakli konumlandirma (kurucu karari):** baslik/etiket/rozette CNC vaadi yok; CNC yalniz aciklamada durust uyari olarak. Testler (`tests/`) bunu zorlar.
 
 ## 4. Depo (bulut) ve kullanici PC'si
-- Repoda: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`. `inputs/ outputs/ *.mp4` git disi.
-- Kullanicinin `forge/` klasorundeki 5 .py dosyasi repodakiyle BIREBIR AYNI (2026-10-23 dogrulandi). `traffic_cannon.py` handover'da var ama kullanici gondermedi — varligi teyit edilecek.
-- Gercek set: 01_Fenrir_Wolf, 02_Yggdrasil_Tree_of_Life, 03_Valkyrie_Warrior, 04_Vegvisir_Viking_Compass, 05_Odin_Allfather (+06 bundle). `seo_generator` profilleri Thor icin yazildi; Vegvisir ve Yggdrasil ad degisikligi icin profil guncellenmeli.
+- Kod: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`; testler `tests/` (`python -m pytest -q`), CI `.github/workflows/ci.yml`. `inputs/ outputs/ *.mp4 *.zip bot_profile/ .env` git disi.
+- Kullanicinin `forge/` klasoru repo ile birebir ayni (2026-10-23). `traffic_cannon.py` HIC YAZILMAMIS (handover'daki "MEVCUT" bilgisi yanlis) -> Faz C'de kurallara uygun yazilacak.
+- Gercek set: 01_Fenrir_Wolf, 02_Yggdrasil_Tree_of_Life, 03_Valkyrie_Warrior, 04_Vegvisir_Viking_Compass, 05_Odin_Allfather, bundle klasoru 06_Norse_Mythology_Bundle. SEO profilleri hepsini kapsar.
+- Kullanici git/GitHub Desktop kullanmakta zorlaniyor: dosya alisverisi sohbete surukle-birak + SendUserFile ile.
 
 ## 5. Calisma kurallari
 Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; ffmpeg video). Pathlib + `Path(__file__).parent`; unicode yol icin `np.fromfile`+`imdecode`. Yazdigini calistir ve dogrula; sonucu durustce raporla. Moduller ayni cikti sozlesmesini kullanir.
 
 ## 6. Yol haritasi (yonetici durumu)
-Tamam: Faz 1-2 (magaza, 6 ilan, uretim fabrikasi, traffic_cannon). **Guncel plan ve bulgular: `docs/AUDIT_AND_WORKPLAN.md`** (Faz A dogruluk/hijyen -> B urun kalitesi -> C uyumlu trafik -> D buyume -> E yeni sutunlar).
-Kritik bulgular: K1 isik depth'e gomulu (dis halka %41 sapma; CNC vaadi riskli), K2 "calibrated" iddialari, K3 UI-bot ToS riski, K4 Etsy kazima riski, Y1 Vegvisir SEO hatasi, Y2 kismen cozuldu (5 dosya ayni; traffic_cannon belirsiz).
-Kurucu kararlari bekleniyor (rapor Bolum 8): Kural 3.2 revizyonu, Adim 1/3 yontemi, konumlandirma, Faz A onayi.
+Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Kullanici tarafinda bekleyen: `docs/LIVE_LISTING_FIXES.md` ile 6 ilani guncellemek + guncel .py dosyalarini forge/'a kopyalamak.
+Siradaki: Faz B (K1 isik -> derinlik duzeltmesi, gercek makine testi), Faz C (Pinterest toplu CSV/zamanlama, YouTube resmi yol, `traffic_cannon` sifirdan), Faz D.
+Bekleyen kurucu kararlari: Shorts otomasyonunun yontemi (API mi tarayici mi), scout_engine resmi kaynak onayi.

@@ -155,3 +155,22 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 3. **Adım 3 yöntemi:** `scout_engine` yalnız resmi kaynaklarla (Etsy API + Trends) mı? (Öneri: evet.)
 4. **Konumlandırma:** B fazı bitene kadar CNC vaadini yumuşatıp "3D illusion laser engraving" ana mesaj olsun mu?
 5. **Faz A'ya başlama onayı** ve `forge/` klasöründeki kodun repoya yüklenmesi.
+
+---
+
+## 9. Karar kaydı ve ilerleme
+
+**2026-10-23 — kurucu kararları**
+- `traffic_cannon.py` yok (handover'daki "MEVCUT" bilgisi yanlış) → Faz C'de kurallara uygun sıfırdan yazılacak.
+- Kural 3.2 revize: bundle **doğrudan Etsy'den** teslim (ZIP parçaları + PDF). Drive yalnız 5 dosyaya sığmayan paketler için.
+- Konumlandırma: **lazer odaklı**; CNC vaadi başlık/etiket/rozetten kaldırıldı, açıklamada dürüst uyarı.
+- Faz A onaylandı.
+
+**Faz A durumu (kod tarafı tamam, testlerle doğrulandı — 9/9 geçti):**
+- A1 ✅ "calibrated" iddiaları tüm kod/metinlerden çıktı; rozetler: "LIGHTBURN & LASER READY", "OPTIMIZED FOR LASER ENGRAVING", "...xTool & EZCAD Ready".
+- A2 ✅ Vegvisir + Yggdrasil Tree of Life profilleri; yedek profilde ad tekrarı yok; ≥4 ürüne özel etiket kuralı kodda.
+- A3 ✅ `--delivery etsy` (varsayılan) / `drive` (link zorunlu); Etsy 5 dosya / 20 MB kontrolü; `bundle_manifest.json`; SEO bundle metni teslim moduna göre.
+- A4 ✅ Kullanıcı `forge/` = repo (birebir aynı).
+- A5 ✅ `tests/test_pipeline.py` + GitHub Actions CI + bağımlılık alt sınırları.
+- Ek hata düzeltmesi: karşılaştırma görselinde ürün adı numarasıyla basılıyordu ("01 FENRIR WOLF") → düzeltildi.
+- **Kurucu tarafında bekleyen:** güncel `.py` dosyalarını `forge/`'a kopyalamak; `docs/LIVE_LISTING_FIXES.md` ile 6 ilanı güncellemek; bundle'a 3 dosyayı yüklemek; (önerilir) 01 ve 04 görsellerini yenilemek.

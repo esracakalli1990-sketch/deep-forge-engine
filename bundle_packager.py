@@ -9,12 +9,16 @@ bundle_packager.py  -  02_asset_factory: Mega Bundle kapak kolaji + teslimat PDF
         01_Bundle_Hero_Collage.jpg                  2000x2000 ana kapak (dairesel madalyon dizilimi + rozetler)
         Download_Instructions_and_License.pdf       Letter, tek sayfa: icerik, LightBurn rehberi, lisans, indirme butonu
         <Bundle>_*.zip                              depth map'ler (Standard + Inverted); her ZIP <= 20 MB (gerekirse bolunur)
+        bundle_manifest.json                        teslim modu + Etsy'ye yuklenecek dosyalar (seo_generator okur)
 
-Etsy dijital dosya siniri 20 MB: 5'li bundle ~18 MB, 10'lu ~36 MB. Guvenli yol: ZIP'i Google Drive'a yukle,
-paylasim linkini --download-url ile ver; Etsy'e sadece kucuk PDF yuklenir (tiklanabilir indirme butonu).
+Teslim modlari (--delivery):
+  etsy  (varsayilan) ZIP parcalari + PDF dogrudan Etsy'ye yuklenir (her dosya <= 20 MB, toplam <= 5 dosya; kodda kontrol).
+        PDF'te link yok; musteri dosyalari Etsy siparisinden indirir. Link sizintisi / kirik link riski yok.
+  drive Etsy'ye yalniz PDF; ZIP'ler Google Drive'da. --download-url ZORUNLU (yoksa script durur).
 
 Kullanim:
-    python bundle_packager.py --download-url "https://drive.google.com/..."
+    python bundle_packager.py
+    python bundle_packager.py --delivery drive --download-url "https://drive.google.com/..."
     python bundle_packager.py --theme "Celtic Knots" --products Knot_A Knot_B Knot_C
 
 Bagimliliklar: opencv-python, numpy, Pillow, reportlab (pip install reportlab)
@@ -23,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import math
 import re
 import sys
@@ -178,7 +183,42 @@ def wrap_chars(text: str, font: str, size: float, width: float) -> list[str]:
     return lines + ([cur] if cur else [])
 
 
-def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, download_url: str) -> None:
+def _drive_button(c, y, M, W, CW, bh, download_url, AMBER, GREY, HexColor, para):
+    """Drive modu: tiklanabilir indirme butonu + yedek duz link. Yeni y doner."""
+    c.setFillColor(AMBER)
+    c.roundRect(M, y - bh, CW, bh, 10, stroke=0, fill=1)
+    c.setStrokeColor(HexColor("#7a5714"))
+    c.setLineWidth(1.5)
+    c.roundRect(M, y - bh, CW, bh, 10, stroke=1, fill=0)
+    c.setFillColor(HexColor("#16120a"))
+    c.setFont("Helvetica-Bold", 17)
+    c.drawCentredString(W / 2, y - bh / 2 - 6, "CLICK HERE TO DOWNLOAD YOUR FILES")
+    c.linkURL(download_url, (M, y - bh, M + CW, y), relative=0, thickness=0)
+    y -= bh + 12
+    y = para_at(c, y, M, CW, "Opens Google Drive. Download the ZIP file(s) and unzip them on your computer.", GREY)
+    y = para_at(c, y, M, CW, "Button not working? Copy and paste this link into your browser:", GREY)
+    c.setFillColor(HexColor("#1d4e89"))
+    c.setFont("Helvetica", 7.6)
+    for ln in wrap_chars(download_url, "Helvetica", 7.6, CW):
+        c.drawString(M, y, ln)
+        y -= 9.5
+    return y - 8
+
+
+def para_at(c, y, M, CW, text, color, size=8.6, font="Helvetica"):
+    from reportlab.lib.utils import simpleSplit
+    c.setFillColor(color)
+    c.setFont(font, size)
+    for ln in simpleSplit(text, font, size, CW):
+        c.drawString(M, y, ln)
+        y -= size * 1.35
+    return y
+
+
+def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, download_url: str | None,
+                      etsy_files: list[str] | None = None) -> None:
+    """download_url verilirse (drive modu) tiklanabilir indirme butonu; yoksa (etsy modu) dosyalarin
+    Etsy siparisinde oldugunu anlatan bolum."""
     try:
         from reportlab.lib.colors import HexColor, white
         from reportlab.lib.pagesizes import letter
@@ -260,33 +300,28 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
         y -= 11.5
     y -= 8
 
-    # --- 2) Indirme butonu
+    # --- 2) Indirme bolumu
     bh = 52
-    c.setFillColor(AMBER)
-    c.roundRect(M, y - bh, CW, bh, 10, stroke=0, fill=1)
-    c.setStrokeColor(HexColor("#7a5714"))
-    c.setLineWidth(1.5)
-    c.roundRect(M, y - bh, CW, bh, 10, stroke=1, fill=0)
-    c.setFillColor(HexColor("#16120a"))
-    c.setFont("Helvetica-Bold", 17)
-    c.drawCentredString(W / 2, y - bh / 2 - 6, "CLICK HERE TO DOWNLOAD YOUR FILES")
-    c.linkURL(download_url, (M, y - bh, M + CW, y), relative=0, thickness=0)
-    y -= bh + 12
-    para("Opens Google Drive. Download the ZIP file(s) and unzip them on your computer.", 8.6, color=GREY)
-    para("Button not working? Copy and paste this link into your browser:", 8.6, color=GREY)
-    c.setFillColor(HexColor("#1d4e89"))
-    c.setFont("Helvetica", 7.6)
-    for ln in wrap_chars(download_url, "Helvetica", 7.6, CW):
-        c.drawString(M, y, ln)
-        y -= 9.5
-    y -= 8
+    if not download_url:
+        c.setFillColor(AMBER)
+        c.roundRect(M, y - bh, CW, bh, 10, stroke=0, fill=1)
+        c.setFillColor(HexColor("#16120a"))
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(W / 2, y - bh / 2 - 6, "YOUR FILES ARE IN YOUR ETSY PURCHASE")
+        y -= bh + 12
+        para("On Etsy: You > Purchases and reviews > Download files. Download every file below, then unzip:", 8.6, color=GREY)
+        for nm in (etsy_files or []):
+            para(f"- {nm}", 8.2, color=INK)
+        y -= 8
+    else:
+        y = _drive_button(c, y, M, W, CW, bh, download_url, AMBER, GREY, HexColor, para)
 
     # --- 3) LightBurn ayarlari
     section("RECOMMENDED LIGHTBURN SETTINGS (STARTING POINTS)")
     cols_w = [70, 150, 108, CW - 70 - 150 - 108]
     hdr = ["Image mode", "Best for", "Resolution", "Tip"]
     rows = [
-        ("3D Slice", "CO2, fiber & galvo: true depth relief in wood, slate, brass",
+        ("3D Slice", "CO2, fiber & galvo: layered depth engraving in wood, slate, brass",
          "254-318 DPI (0.08-0.10 mm line interval)", "Build depth in several passes. Run a small test grid first, then scale up."),
         ("Jarvis", "Diode & CO2 on wood: smooth tonal shading",
          "254-318 DPI", "Usually soft gradients with little banding - a good first choice for diode lasers."),
@@ -395,6 +430,7 @@ def make_delivery_pdf(products: list[Path], out_path: Path, bundle_name: str, do
 
 # --------------------------------------------------------------------------- #
 ZIP_LIMIT_MB = 20.0
+ETSY_MAX_FILES = 5
 
 
 def pack_groups(files: list[Path], limit: int) -> list[list[Path]]:
@@ -420,19 +456,19 @@ def write_zip(path: Path, files: list[Path], root: str) -> None:
             z.write(f, f"{root}/{f.name}")
 
 
-def build_zips(products: list[Path], pdf_path: Path, out_dir: Path, root: str, limit_mb: float) -> list[Path]:
-    """Standard + Inverted PNG'leri paketler. Hepsi (+PDF) limite sigiyorsa tek ZIP; sigmiyorsa Standard ve
-    Inverted ayri ZIP'lere (gerekirse Part1, Part2...) bolunur: boylece iki surum de teslim edilir, her dosya <= limit."""
+def build_zips(products: list[Path], out_dir: Path, root: str, limit_mb: float) -> list[Path]:
+    """Standard + Inverted PNG'leri paketler. Hepsi limite sigiyorsa tek ZIP; sigmiyorsa Standard ve Inverted ayri
+    ZIP'lere (gerekirse Part1, Part2...) bolunur: iki surum de teslim edilir, her dosya <= limit."""
     limit = int(limit_mb * 1_000_000 * 0.99)
     std = [depth_file(p) for p in products]
     inv = [f for f in (inverted_file(p) for p in products) if f]
     for old in out_dir.glob("*.zip"):
         old.unlink()
     outs: list[Path] = []
-    total = sum(f.stat().st_size + 512 for f in std + inv) + pdf_path.stat().st_size
+    total = sum(f.stat().st_size + 512 for f in std + inv)
     if total <= limit:
-        z = out_dir / f"{root}_Files_for_Drive.zip"
-        write_zip(z, std + inv + [pdf_path], root)
+        z = out_dir / f"{root}_Files.zip"
+        write_zip(z, std + inv, root)
         outs.append(z)
     else:
         for label, files in (("STANDARD", std), ("INVERTED", inv)):
@@ -452,11 +488,17 @@ def main() -> int:
     ap.add_argument("--outputs", type=Path, default=OUTPUT_DIR)
     ap.add_argument("--theme", default="NORDIC MYTHOLOGY", help="Bundle temasi (rozet/baslikta kullanilir)")
     ap.add_argument("--bundle-dir", default=None, help="cikti klasor adi (vars: _MEGA_BUNDLE_<TEMANIN ILK KELIMESI>)")
-    ap.add_argument("--download-url", default=PLACEHOLDER_URL, help="Google Drive / bulut paylasim linki")
+    ap.add_argument("--delivery", choices=["etsy", "drive"], default="etsy",
+                    help="etsy: ZIP+PDF Etsy'ye (varsayilan); drive: Etsy'ye yalniz PDF, ZIP'ler Drive'da")
+    ap.add_argument("--download-url", default=None, help="drive modunda ZORUNLU Google Drive paylasim linki")
     ap.add_argument("--products", nargs="*", help="sadece bu urun klasorleri (sirayla)")
     ap.add_argument("--zip-limit-mb", type=float, default=ZIP_LIMIT_MB, help="her ZIP icin ust sinir (Etsy: 20 MB)")
     args = ap.parse_args()
 
+    if args.delivery == "drive" and (not args.download_url or args.download_url == PLACEHOLDER_URL
+                                     or not args.download_url.startswith("http")):
+        print("HATA: drive modunda gecerli --download-url zorunlu (musteriye bozuk link gitmesin).", file=sys.stderr)
+        return 1
     if not args.outputs.is_dir():
         print(f"HATA: {args.outputs} yok. Once `python batch_factory.py` calistir.", file=sys.stderr)
         return 1
@@ -472,22 +514,32 @@ def main() -> int:
     out_dir = args.outputs / bundle_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"{n} urun: {', '.join(p.name for p in products)}")
+    print(f"{n} urun: {', '.join(p.name for p in products)}  | teslim modu: {args.delivery}")
     make_bundle_cover(products, out_dir / COVER_NAME, title, "3D LASER ENGRAVING DEPTH MAP COLLECTION", sub_badge)
     print(f"  kapak    -> {out_dir / COVER_NAME}")
-    make_delivery_pdf(products, out_dir / PDF_NAME, title.title().replace("-In-1", "-in-1"), args.download_url)
+    zips = build_zips(products, out_dir, safe_name(title), args.zip_limit_mb)
+    oversize = [z for z in zips if z.stat().st_size / 1e6 > args.zip_limit_mb]
+    if oversize:
+        print(f"HATA: {', '.join(z.name for z in oversize)} {args.zip_limit_mb:.0f} MB sinirini asiyor "
+              "(tek dosya cok buyuk).", file=sys.stderr)
+        return 1
+    etsy_files = [z.name for z in zips] + [PDF_NAME] if args.delivery == "etsy" else [PDF_NAME]
+    if len(etsy_files) > ETSY_MAX_FILES:
+        print(f"HATA: Etsy'ye {len(etsy_files)} dosya gerekiyor (sinir {ETSY_MAX_FILES}). "
+              "Paketi kucult veya --delivery drive kullan.", file=sys.stderr)
+        return 1
+    make_delivery_pdf(products, out_dir / PDF_NAME, title.title().replace("-In-1", "-in-1"),
+                      args.download_url if args.delivery == "drive" else None,
+                      [z.name for z in zips])
     print(f"  PDF      -> {out_dir / PDF_NAME}")
-    zips = build_zips(products, out_dir / PDF_NAME, out_dir, safe_name(title), args.zip_limit_mb)
     has_inv = all(inverted_file(p) for p in products)
     print(f"  ZIP      -> {len(zips)} dosya ({'Standard + Inverted' if has_inv else 'sadece Standard'})")
     for z in zips:
-        mb = z.stat().st_size / 1e6
-        flag = "OK" if mb <= args.zip_limit_mb else f"!! >{args.zip_limit_mb:.0f} MB (Etsy siniri)"
-        print(f"             {z.name}  {mb:.1f} MB  [{flag}]")
-    pdf_mb = (out_dir / PDF_NAME).stat().st_size / 1e6
-    print(f"  PDF      {pdf_mb:.2f} MB  | Etsy'e yuklenecek dosya sayisini (liste basina sinir) kontrol et: {len(zips) + 1}")
-    if args.download_url == PLACEHOLDER_URL:
-        print("UYARI: --download-url verilmedi, PDF'teki buton yer tutucu link iceriyor.", file=sys.stderr)
+        print(f"             {z.name}  {z.stat().st_size / 1e6:.1f} MB")
+    manifest = {"delivery": args.delivery, "title": title, "products": [p.name for p in products],
+                "etsy_files": etsy_files, "download_url": args.download_url if args.delivery == "drive" else None}
+    (out_dir / "bundle_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"  ETSY'YE YUKLENECEK ({len(etsy_files)}/{ETSY_MAX_FILES}): {', '.join(etsy_files)}")
     return 0
 
 

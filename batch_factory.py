@@ -437,7 +437,7 @@ def render_comparison_guide(depth: np.ndarray, wood_rgb: np.ndarray, brass_rgb: 
     f = flb.load_font(66)
     flb.draw_tracked(d, S / 2, 82, "FROM DEPTH MAP TO PERFECT ENGRAVING", f, (246, 200, 96), 4)
     f2 = flb.load_font(32)
-    flb.draw_tracked(d, S / 2, 150, f"{title.upper()}  |  PRE-CALIBRATED FOR LASER & CNC", f2, (190, 192, 198), 3)
+    flb.draw_tracked(d, S / 2, 150, f"{title.upper()}  |  OPTIMIZED FOR LASER ENGRAVING", f2, (190, 192, 198), 3)
 
     # Istatistik kartlari
     cy0, ch, cw, cg = y_b + 40, 210, 600, 40
@@ -458,7 +458,7 @@ def render_comparison_guide(depth: np.ndarray, wood_rgb: np.ndarray, brass_rgb: 
     # Uyumluluk cubugu
     by0, bh = cy0 + ch + 36, 110
     d.rounded_rectangle((60, by0, S - 60, by0 + bh), 16, fill=(212, 154, 54), outline=(255, 214, 140), width=3)
-    line = "4000x4000px 300 DPI | LightBurn, Glowforge, xTool & CNC Ready"
+    line = "4000x4000px 300 DPI | LightBurn, Glowforge, xTool & EZCAD Ready"
     size = 44
     while True:
         fb = flb.load_font(size)
@@ -545,7 +545,7 @@ def process_product(name: str, src: str, out_root: str, no_video: bool, skip_exi
         flb.save_jpg(slate, out_dir / FILES[2])
         slate_rgb = np.asarray(slate)
 
-        flb.save_jpg(render_comparison_guide(depth, wood_rgb, brass_rgb, name.replace("_", " ")), out_dir / FILES[3])
+        flb.save_jpg(render_comparison_guide(depth, wood_rgb, brass_rgb, re.sub(r"^\d+[_\s-]*", "", name).replace("_", " ")), out_dir / FILES[3])
 
         if not no_video:
             summary = mlv.build_video(depth, cv2.cvtColor(wood_rgb, cv2.COLOR_RGB2BGR),

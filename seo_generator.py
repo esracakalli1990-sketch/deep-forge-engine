@@ -9,7 +9,7 @@ seo_generator.py  -  04_seo_listing_brain: Etsy listing paketi (baslik, 13 etike
 Kurallar (kodda zorlanir):
   - Baslik 130-140 karakter; ilk ~40 karakter en yuksek alici niyetli anahtar kelimeyle baslar.
   - Tekil urun basliklari birbirinin kopyasi degildir (keyword cannibalization): her urun farkli
-    cihaz/yazilim terimiyle acilir (LightBurn, Fiber Laser Coin, Slate Coaster, CNC Router, xTool D1/P2, Glowforge).
+    cihaz/yazilim terimiyle acilir (LightBurn, Fiber Laser Coin, Slate Coaster, Glowforge, xTool D1/P2, Diode Laser).
   - Tam 13 etiket, her biri <= 20 karakter, cok kelimeli, tekrarsiz.
   - Aciklama: paket icerigi (Standard + Inverted), LightBurn/EZCAD hizli baslangic, AI beyani, lisans.
 
@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import itertools
+import json
 import re
 import sys
 from pathlib import Path
@@ -34,8 +35,8 @@ TITLE_MIN, TITLE_MAX = 130, 140
 TAG_COUNT, TAG_MAX = 13, 20
 PRICE_SINGLE, PRICE_BUNDLE = 4.99, 12.99
 
-AI_NOTE = ("Designed with AI-assisted sculpting and precision-calibrated via custom depth-mapping "
-           "algorithms for laser/CNC relief.")
+AI_NOTE = ("Designed with AI-assisted sculpting and processed with our own depth-mapping "
+           "algorithms for laser engraving.")
 
 # --------------------------------------------------------------------------- #
 # Icerik kutuphanesi
@@ -64,9 +65,9 @@ PROFILES: dict[str, dict] = {
         blurb="The Valkyrie, Odin's chooser of the slain, sculpted as a fierce high-relief warrior medallion.",
     ),
     "yggdrasil": dict(
-        display="Yggdrasil Tree",
+        display="Yggdrasil Tree of Life",
         intent="Slate Coaster Laser Engraving",
-        segs=["World Tree of Life Depth Map PNG", "Diode CO2 Laser Relief File", "xTool D1 Glowforge Grayscale 300 DPI",
+        segs=["Norse World Tree Depth Map PNG", "Diode CO2 Laser Relief File", "xTool D1 Glowforge Grayscale 300 DPI",
               "Norse Mythology Digital Download"],
         specific=["yggdrasil laser art", "world tree engraving", "tree of life relief", "yggdrasil depth map",
                   "norse tree design", "norse mythology art"],
@@ -75,21 +76,31 @@ PROFILES: dict[str, dict] = {
     ),
     "thor": dict(
         display="Thor Mjolnir",
-        intent="CNC Router Relief Depth Map",
+        intent="Glowforge 3D Engraving File",
         segs=["Hammer 3D Heightmap Bump Map PNG", "LightBurn Fiber Laser Coin Design", "Glowforge xTool Grayscale 300 DPI",
               "Norse Viking Digital Download"],
-        specific=["thor hammer laser", "mjolnir engraving", "thor cnc relief", "mjolnir depth map",
+        specific=["thor hammer laser", "mjolnir engraving", "thor laser relief", "mjolnir depth map",
                   "thunder god relief", "viking hammer design"],
-        must=["cnc router relief", "grayscale bump map"],
+        must=["glowforge file", "grayscale bump map"],
         blurb="Thor and his hammer Mjolnir, the thunder god of Norse myth, sculpted as a powerful relief medallion.",
+    ),
+    "vegvisir": dict(
+        display="Vegvisir Viking Compass",
+        intent="Glowforge 3D Engraving File",
+        segs=["Norse Runic Compass Relief PNG", "LightBurn xTool Diode CO2 Grayscale", "4000x4000 300 DPI Instant Download",
+              "Viking Symbol Commercial Use"],
+        specific=["vegvisir laser file", "vegvisir engraving", "viking compass art", "vegvisir depth map",
+                  "norse rune compass", "viking symbol laser"],
+        must=["glowforge file", "grayscale bump map"],
+        blurb="Vegvisir, the Norse runic compass said to guide its bearer through storms, sculpted as a detailed relief medallion.",
     ),
     "odin": dict(
         display="Odin Allfather",
         intent="xTool D1 P2 Laser Engraving File",
-        segs=["Norse God Depth Map Relief PNG", "Slate Coaster CNC Router Grayscale", "LightBurn Glowforge 4000x4000 300 DPI",
+        segs=["Norse God Depth Map Relief PNG", "Slate Coaster Diode CO2 Grayscale", "LightBurn Glowforge 4000x4000 300 DPI",
               "Viking Mythology Digital Download"],
         specific=["odin laser engraving", "allfather depth map", "odin raven relief", "norse god laser art",
-                  "odin cnc relief", "viking god design"],
+                  "odin coin relief", "viking god design"],
         must=["xtool d1 design", "laser engraver png"],
         blurb="Odin the Allfather, the one-eyed ruler of Asgard, sculpted as a commanding relief medallion.",
     ),
@@ -97,17 +108,17 @@ PROFILES: dict[str, dict] = {
 
 # Bilinmeyen urunler icin rotasyonlu yedek kutuphane
 ROT_INTENTS = ["LightBurn 3D Depth Map", "Fiber Laser Coin Relief File", "Slate Coaster Laser Engraving",
-               "CNC Router Relief Depth Map", "xTool D1 P2 Laser Engraving File", "Glowforge Laser Engraving File"]
+               "Glowforge 3D Engraving File", "xTool D1 P2 Laser Engraving File", "Diode Laser 3D Illusion File"]
 ROT_MUST = [["lightburn 3d slice", "glowforge file"], ["fiber laser coin", "ezcad galvo file"],
-            ["slate coaster laser", "diode laser design"], ["cnc router relief", "grayscale bump map"],
-            ["xtool d1 design", "laser engraver png"], ["glowforge file", "co2 laser 3d art"]]
+            ["slate coaster laser", "diode laser design"], ["glowforge file", "grayscale bump map"],
+            ["xtool d1 design", "laser engraver png"], ["diode laser design", "co2 laser 3d art"]]
 
 TAG_POOL = ["laser depth map", "lightburn 3d slice", "glowforge file", "xtool d1 design", "fiber laser coin",
-            "cnc router relief", "slate coaster laser", "grayscale bump map", "3d engraving file", "laser engraver png",
+            "3d illusion laser", "slate coaster laser", "grayscale bump map", "3d engraving file", "laser engraver png",
             "ezcad galvo file", "300 dpi depth map", "wood engraving art", "viking laser art", "norse laser file",
             "commercial use file", "laser relief design", "4000px heightmap", "diode laser design", "co2 laser 3d art"]
 
-TITLE_FILLERS = ["Instant Download", "Commercial Use", "PNG Heightmap", "Digital File", "Laser CNC Ready"]
+TITLE_FILLERS = ["Instant Download", "Commercial Use", "PNG Heightmap", "Digital File", "Laser Ready File"]
 
 
 # --------------------------------------------------------------------------- #
@@ -175,7 +186,6 @@ QUICK_START = [
     ("LightBurn - Diode / wood, slate", "Jarvis or Stucki", "254-318 DPI (0.08-0.10 mm)", "Lower speed, check detail on scrap first"),
     ("LightBurn - Fiber / galvo", "Grayscale image", "500-1000 DPI (0.025-0.05 mm)", "Test depth grid; adjust passes"),
     ("EZCAD - Fiber / galvo coin", "Bitmap / gray", "500-1000 DPI (0.025-0.05 mm)", "Import PNG, set size, test power/freq"),
-    ("CNC router", "Grayscale heightmap", "Per your CAM software", "Map white/black to Z depth, test on scrap"),
 ]
 
 COMMON_TAIL = """HOW TO USE
@@ -193,6 +203,7 @@ IMPORTANT NOTES
 - This is a DIGITAL DOWNLOAD. No physical item is shipped.
 - Preview images are computer-generated renderings for illustration. Actual results depend on your machine, power, speed, lens and material - always test first.
 - Speed/power values are material- and machine-specific; the table gives starting points only.
+- These are shading-based 3D illusion files made for laser engraving. CNC router users: results vary - test on scrap before production.
 
 LICENSE
 Personal and commercial use: you may make and sell unlimited physical products (engraved, carved or etched items) with these files.
@@ -207,7 +218,7 @@ Questions? Message ForgeDepthStudio on Etsy - we reply fast. Thank you!"""
 def describe_single(prof: dict, std_name: str, inv_name: str) -> str:
     return f"""{prof['display'].upper()} - 3D LASER ENGRAVING DEPTH MAP | INSTANT DIGITAL DOWNLOAD
 
-{prof['blurb']} Two pre-calibrated 4000x4000 px, 300 DPI, 8-bit grayscale depth maps for LightBurn, EZCAD, Glowforge, xTool and CNC routers - ready for wood, slate coasters, brass and fiber-laser coins.
+{prof['blurb']} Two ready-to-use 4000x4000 px, 300 DPI, 8-bit grayscale 3D illusion depth maps for LightBurn, EZCAD, Glowforge and xTool - made for wood, slate coasters, brass and fiber-laser coins.
 
 WHAT YOU GET (2 PNG FILES)
 1) {std_name}  -  STANDARD (black = deepest)
@@ -221,22 +232,26 @@ QUICK START - LIGHTBURN & EZCAD (starting points)
 
 
 def describe_bundle(n: int, theme: str, names: list[str], price: float, single_price: float,
-                    zip_names: list[str]) -> str:
+                    files: list[str], delivery: str) -> str:
     total = n * single_price
     save_pct = round((1 - price / total) * 100)
     lines = "\n".join(f"{i}) {nm}" for i, nm in enumerate(names, 1))
-    files = "\n".join(f"- {z}" for z in zip_names)
+    if delivery == "drive":
+        receive = ("Etsy delivers a PDF (Download_Instructions_and_License.pdf) right after payment. "
+                   "Click its download button to get all files from our cloud folder.")
+    else:
+        receive = ("Instant download from Etsy right after payment (Purchases and reviews):\n"
+                   + "\n".join(f"- {f}" for f in files))
     return f"""{n}-IN-1 {theme.upper()} MEGA BUNDLE - 3D LASER ENGRAVING DEPTH MAPS | COMMERCIAL USE
 
-{n} premium {theme} relief medallions in one download: pre-calibrated 4000x4000 px, 300 DPI, 8-bit grayscale depth maps for LightBurn, EZCAD, Glowforge, xTool and CNC routers. Buy all {n} for ${price:.2f} instead of ${total:.2f} - SAVE {save_pct}% vs buying them one by one.
+{n} premium {theme} relief medallions in one download: ready-to-use 4000x4000 px, 300 DPI, 8-bit grayscale 3D illusion depth maps for LightBurn, EZCAD, Glowforge and xTool. Buy all {n} for ${price:.2f} instead of ${total:.2f} - SAVE {save_pct}% vs buying them one by one.
 
 WHAT'S INSIDE ({n} DESIGNS x 2 VERSIONS = {2 * n} PNG FILES)
 {lines}
 Every design comes as STANDARD (black = deepest) and INVERTED (white = deepest), 4000 x 4000 px | 300 DPI | 8-bit grayscale | circular medallion on pure black (#000000).
 
 HOW YOU RECEIVE THE FILES
-{files}
-- Download_Instructions_and_License.pdf (download links, LightBurn guide, license)
+{receive}
 
 QUICK START - LIGHTBURN & EZCAD (starting points)
 {table(QUICK_START)}
@@ -257,11 +272,14 @@ def find_profile(folder: str, idx: int) -> dict:
         if key in low:
             return {**prof, "key": key}
     disp = pretty(folder)
-    w = re.sub(r"[^a-z0-9 ]", "", disp.lower())
-    spec = [f"{w} laser file", f"{w} depth map", f"{w} relief design", f"{w} engraving"]
+    words = re.sub(r"[^a-z0-9 ]", "", disp.lower()).split()
+    w0 = words[0] if words else "relief"
+    w01 = " ".join(words[:2]) if len(words) > 1 else w0
+    spec = [f"{w0} laser file", f"{w0} engraving", f"{w0} depth map", f"{w01} laser", f"{w01} art",
+            f"{w0} relief design", f"{w0} laser art"]
     return dict(
         key=folder.lower(), display=disp, intent=ROT_INTENTS[idx % len(ROT_INTENTS)],
-        segs=[f"{disp} 3D Relief Depth Map PNG", "LightBurn Glowforge xTool Grayscale", "4000x4000 300 DPI Instant Download",
+        segs=["3D Relief Depth Map PNG", "LightBurn Glowforge xTool Grayscale", "4000x4000 300 DPI Instant Download",
               "Commercial Use Digital Download"],
         specific=spec, must=ROT_MUST[idx % len(ROT_MUST)],
         blurb=f"{disp}, sculpted as a deep, high-detail relief medallion.",
@@ -275,7 +293,7 @@ def list_products(outputs: Path) -> list[Path]:
 
 def list_bundles(outputs: Path) -> list[Path]:
     return [d for d in sorted(outputs.iterdir())
-            if d.is_dir() and d.name.startswith("_MEGA_BUNDLE") and (d / "01_Bundle_Hero_Collage.jpg").is_file()]
+            if d.is_dir() and (d / "01_Bundle_Hero_Collage.jpg").is_file()]
 
 
 def mb(path: Path) -> str:
@@ -307,20 +325,26 @@ def build_single(folder: Path, idx: int, price: float) -> dict:
 def build_bundle(folder: Path, products: list[Path], theme: str, price: float, single_price: float) -> dict:
     n = len(products)
     names = [find_profile(p.name, i)["display"] for i, p in enumerate(products)]
-    segs = ["Viking Laser Files PNG", "LightBurn Glowforge xTool", "Fiber Laser Coin CNC Router Slate Coaster",
+    segs = ["Viking Laser Files PNG", "LightBurn Glowforge xTool", "Fiber Laser Coin Slate Coaster Wood",
             "300 DPI Commercial Use"]
     title = fit_title(f"{n}-in-1 Mega Bundle Laser Engraving Depth Maps", theme, segs)
     th = theme.split()[0].lower()
     specific = ["mega bundle laser", "laser file bundle", f"{n} laser depth maps", f"{th} laser bundle", "viking laser bundle",
                 "lightburn bundle"]
-    must = ["glowforge bundle", "fiber laser coin set", "cnc relief bundle", "slate coaster bundle", "xtool design bundle"]
+    must = ["glowforge bundle", "fiber laser coin set", "laser coaster bundle", "slate coaster bundle", "xtool design bundle"]
     tags = build_tags(specific, must, offset=3)
-    zips = sorted(folder.glob("*.zip"))
     pdf = folder / "Download_Instructions_and_License.pdf"
-    upload = [(z.name, mb(z)) for z in zips] + ([(pdf.name, mb(pdf))] if pdf.is_file() else [])
+    manifest = folder / "bundle_manifest.json"
+    meta = json.loads(manifest.read_text(encoding="utf-8")) if manifest.is_file() else {}
+    delivery = meta.get("delivery", "etsy")
+    if delivery == "drive":                         # Etsy'ye yalniz PDF; ZIP'ler Drive'da
+        upload = [(pdf.name, mb(pdf))] if pdf.is_file() else []
+    else:                                           # Etsy'ye ZIP'ler + PDF (her biri <= 20 MB, toplam <= 5 dosya)
+        names_ = meta.get("etsy_files") or [z.name for z in sorted(folder.glob("*.zip"))] + [pdf.name]
+        upload = [(nm, mb(folder / nm)) for nm in names_ if (folder / nm).is_file()]
     return dict(
         kind="bundle", folder=folder, name=f"{n}-in-1 {theme} Mega Bundle", title=title, tags=tags, price=price,
-        description=describe_bundle(n, theme, names, price, single_price, [u[0] for u in upload if u[0].endswith('.zip')]),
+        description=describe_bundle(n, theme, names, price, single_price, [u[0] for u in upload], delivery),
         photos=[("01_Bundle_Hero_Collage.jpg", "ana kapak (hero collage)")], video=None, upload=upload,
         saving=round((1 - price / (n * single_price)) * 100), n=n, single_price=single_price,
     )
@@ -382,6 +406,14 @@ def check_uniqueness(listings: list[dict]) -> None:
     for L in listings:
         assert TITLE_MIN <= len(L["title"]) <= TITLE_MAX, f"Baslik {len(L['title'])} karakter: {L['title']}"
         validate_tags(L["tags"])
+    for L in listings:
+        assert "calibrat" not in (L["title"] + L["description"]).lower(), f"Kanitlanamayan iddia: {L['name']}"
+        assert "cnc" not in L["title"].lower() and not any("cnc" in t for t in L["tags"]), f"CNC vaadi (lazer odakli karar): {L['name']}"
+        if L["kind"] == "single":
+            assert L["title"].lower().count(L["name"].lower()) == 1, f"Urun adi baslikta tam 1 kez olmali: {L['title']}"
+            generic = set(TAG_POOL) | {t for m in ROT_MUST for t in m}
+            specific = [t for t in L["tags"] if t not in generic]
+            assert len(specific) >= 4, f"Urune ozel >=4 etiket gerekli: {L['name']} -> {specific}"
     # Anahtar kelime cannibalization: ayni acilis ifadesi (ilk 3 kelime) iki urunde olmasin
     firsts = [" ".join(L["title"].lower().split()[:3]) for L in singles]
     assert len(set(firsts)) == len(firsts), f"Ayni acilis ifadesi tekrar ediyor: {firsts}"

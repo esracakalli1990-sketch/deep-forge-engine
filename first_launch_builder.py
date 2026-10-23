@@ -333,7 +333,7 @@ def render_wood_mockup(depth: np.ndarray) -> Image.Image:
     col = np.clip(col, 0, 1) ** F32(1 / 1.12)
 
     img = Image.fromarray(np.clip(col * 255 + 0.5, 0, 255).astype(np.uint8), "RGB")
-    return add_badge(img, "3D DEPTH MAP | 300 DPI PNG | LIGHTBURN & CNC READY")
+    return add_badge(img, "3D DEPTH MAP | 300 DPI PNG | LIGHTBURN & LASER READY")
 
 
 # --------------------------------------------------------------------------- #

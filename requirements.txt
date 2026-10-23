@@ -1,7 +1,9 @@
-opencv-python
-numpy
-Pillow
+# Test edilen surumler (2026-10): opencv-python 5.0.0.93, numpy 2.5.3, Pillow 12.3.0, reportlab 5.0.1
+opencv-python>=4.9
+numpy>=1.26
+# load_default(size=...) icin >= 10.1
+Pillow>=10.1
 # PDF teslimat dosyasi (bundle_packager.py)
-reportlab
+reportlab>=4.0
 # Opsiyonel: sistemde ffmpeg yoksa video icin H.264 destekli ffmpeg getirir
-imageio-ffmpeg
+imageio-ffmpeg>=0.5
