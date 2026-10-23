@@ -22,7 +22,7 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 
 ## 4. Depo (bulut) ve kullanici PC'si
 - Repoda: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`. `inputs/ outputs/ *.mp4` git disi.
-- Kullanicinin `forge/` klasorunde ek olarak `traffic_cannon.py` var (9:16 Shorts + 2:3 Pinterest uretir) — **repoda YOK**, muhendis yazdi; yonetmek icin repoya alinmali.
+- Kullanicinin `forge/` klasorundeki 5 .py dosyasi repodakiyle BIREBIR AYNI (2026-10-23 dogrulandi). `traffic_cannon.py` handover'da var ama kullanici gondermedi — varligi teyit edilecek.
 - Gercek set: 01_Fenrir_Wolf, 02_Yggdrasil_Tree_of_Life, 03_Valkyrie_Warrior, 04_Vegvisir_Viking_Compass, 05_Odin_Allfather (+06 bundle). `seo_generator` profilleri Thor icin yazildi; Vegvisir ve Yggdrasil ad degisikligi icin profil guncellenmeli.
 
 ## 5. Calisma kurallari
@@ -30,5 +30,5 @@ Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; f
 
 ## 6. Yol haritasi (yonetici durumu)
 Tamam: Faz 1-2 (magaza, 6 ilan, uretim fabrikasi, traffic_cannon). **Guncel plan ve bulgular: `docs/AUDIT_AND_WORKPLAN.md`** (Faz A dogruluk/hijyen -> B urun kalitesi -> C uyumlu trafik -> D buyume -> E yeni sutunlar).
-Kritik bulgular: K1 isik depth'e gomulu (dis halka %41 sapma; CNC vaadi riskli), K2 "calibrated" iddialari, K3 UI-bot ToS riski, K4 Etsy kazima riski, Y1 Vegvisir SEO hatasi, Y2 repo != kullanici forge/.
+Kritik bulgular: K1 isik depth'e gomulu (dis halka %41 sapma; CNC vaadi riskli), K2 "calibrated" iddialari, K3 UI-bot ToS riski, K4 Etsy kazima riski, Y1 Vegvisir SEO hatasi, Y2 kismen cozuldu (5 dosya ayni; traffic_cannon belirsiz).
 Kurucu kararlari bekleniyor (rapor Bolum 8): Kural 3.2 revizyonu, Adim 1/3 yontemi, konumlandirma, Faz A onayi.
