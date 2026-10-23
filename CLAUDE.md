@@ -1,5 +1,8 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
+> **YEREL OTURUM ISE:** Kullanici seni Etsy guncellemesi icin actiysa yalnizca `docs/ONE_TIME_TASK_ETSY_UPDATE.md` gorevini yap (tek seferlik), bitince oradaki bitis mesajini yaz ve dur.
+> **BULUT OTURUMU ISE ve kullanici "geri geldim" derse:** Etsy guncellemesinin sonucunu sor (hangi ilanlar guncellendi, sorun var mi), sonra Bolum 6'daki siradaki ise (Faz B) gec.
+
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
 ## 1. Roller
