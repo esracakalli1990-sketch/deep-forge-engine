@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Kullanici seni Etsy guncellemesi icin actiysa yalnizca `docs/ONE_TIME_TASK_ETSY_UPDATE.md` gorevini yap (tek seferlik), bitince oradaki bitis mesajini yaz ve dur.
-> **BULUT OTURUMU ISE ve kullanici "geri geldim" derse:** Etsy guncellemesinin sonucunu sor (hangi ilanlar guncellendi, sorun var mi), sonra Bolum 6'daki siradaki ise (Faz B) gec.
+> **DURUM (2026-10-24):** Etsy guncellemesi yerel oturumda yapildi (kullaniciya gore 6 ilan duzenlendi; bulut Etsy'ye erisemedigi icin dogrulama icin Listings ekran goruntusu istendi). **Kullanici acikca soyleyene kadar Faz B'ye GECME; haber bekle.**
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
@@ -33,6 +33,6 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; ffmpeg video). Pathlib + `Path(__file__).parent`; unicode yol icin `np.fromfile`+`imdecode`. Yazdigini calistir ve dogrula; sonucu durustce raporla. Moduller ayni cikti sozlesmesini kullanir.
 
 ## 6. Yol haritasi (yonetici durumu)
-Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Kullanici tarafinda bekleyen: `docs/LIVE_LISTING_FIXES.md` ile 6 ilani guncellemek + guncel .py dosyalarini forge/'a kopyalamak.
+Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Canli 6 ilan guncellendi (kullanici beyani, 2026-10-24). Kullanicinin forge/ klasorundeki .py dosyalari eski olabilir (yeni surumler gonderildi; kopyalandigi teyit edilmedi).
 Siradaki: Faz B (K1 isik -> derinlik duzeltmesi, gercek makine testi), Faz C (Pinterest toplu CSV/zamanlama, YouTube resmi yol, `traffic_cannon` sifirdan), Faz D.
 Bekleyen kurucu kararlari: Shorts otomasyonunun yontemi (API mi tarayici mi), scout_engine resmi kaynak onayi.
