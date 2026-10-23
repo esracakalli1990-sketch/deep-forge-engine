@@ -12,7 +12,7 @@ Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `doc
 Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletmelerine B2B dijital uretim hammaddesi (sifir stok/kargo).
 - **Sutun 1 AKTIF:** 3D depth map (Standard + Inverted PNG, 4000x4000, 300 DPI, 8-bit, disi #000000).
 - Sutun 2 planli: 20oz tumbler seamless wrap + DTF paketleri. Sutun 3 planli: lazer/CNC maliyet tablolari (Sheets + Apps Script).
-- **Durum:** magaza canli, 6 ilan Active ($4.99 x5: Fenrir, Yggdrasil, Valkyrie, Vegvisir, Odin; $12.99 5-in-1 bundle). **72 saat isindirma:** yeni ilan YOK; arka planda trafik/istihbarat.
+- **Durum:** magaza canli, 6 ilan Active ($4.99 x5: Fenrir, Valkyrie, Yggdrasil, Thor Mjolnir, Odin; $12.99 5-in-1 bundle). **72 saat isindirma:** yeni ilan YOK; arka planda trafik/istihbarat.
 
 ## 3. Kirmizi cizgiler
 1. VPN/proxy yok; temiz yerel IP + sabit Chrome profili. Isindirma: tek seferde 50 urun yok.
@@ -23,7 +23,7 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 ## 4. Depo (bulut) ve kullanici PC'si
 - Kod: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`; testler `tests/` (`python -m pytest -q`), CI `.github/workflows/ci.yml`. `inputs/ outputs/ *.mp4 *.zip bot_profile/ .env` git disi.
 - Kullanicinin `forge/` klasoru repo ile birebir ayni (2026-10-23). `traffic_cannon.py` HIC YAZILMAMIS (handover'daki "MEVCUT" bilgisi yanlis) -> Faz C'de kurallara uygun yazilacak.
-- Gercek set: 01_Fenrir_Wolf, 02_Yggdrasil_Tree_of_Life, 03_Valkyrie_Warrior, 04_Vegvisir_Viking_Compass, 05_Odin_Allfather, bundle klasoru 06_Norse_Mythology_Bundle. SEO profilleri hepsini kapsar.
+- **Gercek set (Etsy ekran goruntusuyle dogrulandi 2026-10-24):** 01_Fenrir_Wolf, 02_Valkyrie_Warrior, 03_Yggdrasil_Tree, 04_Thor_Mjolnir, 05_Odin_Allfather + bundle. Handover'daki "04 Vegvisir" YANLIS (4. urun Thor cekici). Canli basliklar eski seo_generator ciktisi (Thor basliginda "CNC Router", aciklamalarda "pre-calibrated" var). Fenrir ilaninin kapak fotografi 04 Comparison (kural: 01 Wood).
 - Kullanici git/GitHub Desktop kullanmakta zorlaniyor: dosya alisverisi sohbete surukle-birak + SendUserFile ile.
 
 ## 5. Calisma kurallari
