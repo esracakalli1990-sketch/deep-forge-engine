@@ -257,6 +257,72 @@ def auto_depth_normalizer(bgr: np.ndarray, alpha: np.ndarray | None):
 
 
 # --------------------------------------------------------------------------- #
+# Faz B1 - Isik izi temizleme (directional light removal)
+# --------------------------------------------------------------------------- #
+# AI render'larinda ust/yan isik, egimli yuzeylerde (rim, halka, dugum bandi) aciya bagli parlaklik egimi
+# birakir; parlaklik = yukseklik varsayiminda bu, halkanin "egik" oyulmasi demektir. Isik yonu tum gorselde
+# ayni oldugundan dis bantlardaki 1. acisal harmonigin fazi bu eksende toplanir; konu (kurt, yuz) ise rastgele
+# fazlar uretir. Yontem: ekseni dis bantlardan tahmin et, her yaricapta yalniz bu eksendeki 1. harmonigi
+# cikar, merkezdeki konuya dokunma. Yaricap boyunca ortalama (kubbe/rim profili) korunur.
+DELIGHT_MIN_CONF = 0.5          # eksen tutarliligi bunun altindaysa (isik belirsiz) duzeltme uygulanmaz
+DELIGHT_QA_LIMIT = 10.0         # duzeltme sonrasi dis bant isik egimi (%) bunu asarsa uyari
+
+
+def _polar(gray: np.ndarray, radius: float, nr: int, nth: int) -> np.ndarray:
+    c = (gray.shape[0] - 1) / 2.0
+    return cv2.warpPolar(gray.astype(F32), (nr, nth), (c, c), radius, cv2.WARP_POLAR_LINEAR)
+
+
+def _harmonic1(pol: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """pol: satir=aci, sutun=yaricap. Her yaricap icin 1. acisal harmonik katsayilari (a1, b1)."""
+    th = np.linspace(0, 2 * np.pi, pol.shape[0], endpoint=False)[:, None]
+    return 2 * (pol * np.cos(th)).mean(0), 2 * (pol * np.sin(th)).mean(0)
+
+
+def _mask_radius(mask: np.ndarray) -> float:
+    return float(np.sqrt((mask > 0.5).sum() / np.pi))
+
+
+def light_axis(gray: np.ndarray, mask: np.ndarray, r_lo: float = 0.6, r_hi: float = 0.97) -> tuple[float, float]:
+    """Dis bantlardan isik ekseni (radyan, 0..pi) ve tutarlilik guveni (0..1)."""
+    nr = 600
+    a1, b1 = _harmonic1(_polar(gray, _mask_radius(mask), nr, 720))
+    cols = np.arange(int(r_lo * nr), int(r_hi * nr))
+    amp, ph = np.hypot(a1[cols], b1[cols]), np.arctan2(b1[cols], a1[cols])
+    vx, vy = (amp * np.cos(2 * ph)).sum(), (amp * np.sin(2 * ph)).sum()     # eksen (yon degil): 2x aci
+    return float(0.5 * np.arctan2(vy, vx)), float(np.hypot(vx, vy) / (amp.sum() + 1e-6))
+
+
+def light_bias_pct(img: np.ndarray, phi: float, r_lo: float = 0.6, r_hi: float = 0.97) -> float:
+    """Dis bantlarda isik eksenindeki aciya bagli parlaklik egiminin medyani (tepe-tepe, % / 255)."""
+    small = cv2.resize(img, (1000, 1000), interpolation=cv2.INTER_AREA) if img.shape[0] > 1000 else img
+    nr = 600
+    a1, b1 = _harmonic1(_polar(small, _mask_radius((small > 0).astype(F32)), nr, 720))
+    cols = np.arange(int(r_lo * nr), int(r_hi * nr))
+    return float(np.median(np.abs(a1[cols] * np.cos(phi) + b1[cols] * np.sin(phi)))) * 2 / 255 * 100
+
+
+def remove_directional_light(gray: np.ndarray, mask: np.ndarray, r_start: float = 0.50, r_full: float = 0.62):
+    """-> (duzeltilmis gri uint8, phi | None, guven). Guven dusukse gorsel degistirilmez (phi=None)."""
+    phi, conf = light_axis(gray, mask)
+    if conf < DELIGHT_MIN_CONF:
+        return gray, None, conf
+    s, nr, nth = gray.shape[0], 1000, 1440
+    c, R = (s - 1) / 2.0, _mask_radius(mask)
+    g = gray.astype(F32)
+    a1, b1 = _harmonic1(_polar(g, R, nr, nth))
+    k = cv2.GaussianBlur((a1 * np.cos(phi) + b1 * np.sin(phi)).reshape(1, -1).astype(F32), (0, 0), 1.5).ravel()
+    w = flb.smoothstep(r_start, r_full, np.arange(nr, dtype=F32) / nr)          # merkez konuya dokunma
+    th = np.linspace(0, 2 * np.pi, nth, endpoint=False)[:, None]
+    corr = cv2.warpPolar(((k * w)[None, :] * np.cos(th - phi)).astype(F32), (s, s), (c, c), R,
+                         cv2.WARP_POLAR_LINEAR | cv2.WARP_INVERSE_MAP)
+    inside = mask > 0.5
+    out = np.clip(g - corr * inside, 0, 255)
+    out[~inside] = out[inside].mean()                   # normalizer sozlesmesi: disari notr (CLAHE halesi olmasin)
+    return out.astype(np.uint8), phi, conf
+
+
+# --------------------------------------------------------------------------- #
 # Ortak gorsel yardimcilari
 # --------------------------------------------------------------------------- #
 def carbon_bg(size: int) -> np.ndarray:
@@ -507,7 +573,8 @@ def verify_depth(path: Path) -> str:
     return f"{mb:.1f} MB" + ("" if mb < 20 else "  !! >20 MB (Etsy siniri)")
 
 
-def process_product(name: str, src: str, out_root: str, no_video: bool, skip_existing: bool) -> dict:
+def process_product(name: str, src: str, out_root: str, no_video: bool, skip_existing: bool,
+                    delight: bool = True) -> dict:
     t0 = time.time()
     out_dir = Path(out_root) / name
     depth_name = f"{name}_3D_DepthMap_300DPI.png"
@@ -523,7 +590,21 @@ def process_product(name: str, src: str, out_root: str, no_video: bool, skip_exi
         gray, mask, info = auto_depth_normalizer(bgr, alpha)
         res["notes"].append(info)
 
+        phi = None
+        if delight:
+            gray_in = gray
+            gray, phi, conf = remove_directional_light(gray, mask)
+            if phi is None:
+                res["notes"].append(f"isik izi: eksen belirsiz (guven={conf:.2f}) -> duzeltme uygulanmadi")
+            else:
+                before = light_bias_pct(flb.build_depth_map(gray_in, mask), phi)
+
         depth, g_tone, m_full = flb.build_depth_map(gray, mask, return_parts=True)
+        if delight and phi is not None:
+            after = light_bias_pct(depth, phi)
+            flag = "" if after <= DELIGHT_QA_LIMIT else f"  !! QA: >%{DELIGHT_QA_LIMIT:.0f}, gorseli kontrol et"
+            res["notes"].append(f"isik izi: eksen={np.degrees(phi) % 180:.0f} derece, guven={conf:.2f}, "
+                                f"dis bant egimi %{before:.1f} -> %{after:.1f}{flag}")
         flb.save_png(depth, out_dir / depth_name)
         res["notes"].append("depth " + verify_depth(out_dir / depth_name))
 
@@ -570,6 +651,7 @@ def main() -> int:
     ap.add_argument("--skip-existing", action="store_true", help="tam seti olan urunleri atla")
     ap.add_argument("--no-video", action="store_true", help="MP4 uretme (hizli)")
     ap.add_argument("--workers", type=int, default=1, help="paralel urun sayisi (her biri ~2 GB RAM)")
+    ap.add_argument("--no-delight", action="store_true", help="isik izi temizlemeyi kapat (karsilastirma icin)")
     args = ap.parse_args()
 
     if not args.inputs.is_dir():
@@ -585,7 +667,8 @@ def main() -> int:
 
     results: list[dict] = []
     t0 = time.time()
-    job_args = lambda n, p: (n, str(p), str(args.outputs), args.no_video, args.skip_existing)  # noqa: E731
+    job_args = lambda n, p: (n, str(p), str(args.outputs), args.no_video, args.skip_existing,  # noqa: E731
+                             not args.no_delight)
     if args.workers > 1 and len(jobs) > 1:
         with ProcessPoolExecutor(max_workers=args.workers) as ex:
             futs = {ex.submit(process_product, *job_args(n, p)): n for n, p in jobs}

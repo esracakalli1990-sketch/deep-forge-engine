@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Kullanici seni Etsy guncellemesi icin actiysa yalnizca `docs/ONE_TIME_TASK_ETSY_UPDATE.md` gorevini yap (tek seferlik), bitince oradaki bitis mesajini yaz ve dur.
-> **DURUM (2026-10-24):** Etsy guncellemesi DOGRULANDI (Listings ekran goruntusu): 6 ilan Active, yeni basliklar ve ahsap kapaklar (LASER READY rozeti) canlida; bundle kapagi yeni kolaj. Aciklama/etiket/dijital dosyalar ekrandan gorulemedi. **Kullanici acikca soyleyene kadar Faz B'ye GECME; haber bekle.**
+> **DURUM (2026-10-24):** Faz B onaylandi (kurucunun lazeri yok). B1 (`remove_directional_light`) + B2 (`docs/PROMPT_LIBRARY.md`) kodda/push'lu. B4: 5 urun delight ile yeniden uretildi, once/sonra kurucuya gosterildi; canli PNG degisimi icin kurucu onayi BEKLENIYOR. Sonra B3 test kiti.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
@@ -34,5 +34,5 @@ Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; f
 
 ## 6. Yol haritasi (yonetici durumu)
 Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Canli 6 ilan guncellendi (kullanici beyani, 2026-10-24). Kullanicinin forge/ klasorundeki .py dosyalari eski olabilir (yeni surumler gonderildi; kopyalandigi teyit edilmedi).
-Siradaki: Faz B (K1 isik -> derinlik duzeltmesi, gercek makine testi), Faz C (Pinterest toplu CSV/zamanlama, YouTube resmi yol, `traffic_cannon` sifirdan), Faz D.
+Faz B: B1+B2 TAMAM; B4 onay bekliyor; B3 test kiti siradaki. Sonra, Faz C (Pinterest toplu CSV/zamanlama, YouTube resmi yol, `traffic_cannon` sifirdan), Faz D.
 Bekleyen kurucu kararlari: Shorts otomasyonunun yontemi (API mi tarayici mi), scout_engine resmi kaynak onayi.

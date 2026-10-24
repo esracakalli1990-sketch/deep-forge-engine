@@ -174,3 +174,8 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 - A5 ✅ `tests/test_pipeline.py` + GitHub Actions CI + bağımlılık alt sınırları.
 - Ek hata düzeltmesi: karşılaştırma görselinde ürün adı numarasıyla basılıyordu ("01 FENRIR WOLF") → düzeltildi.
 - **Kurucu tarafında bekleyen:** güncel `.py` dosyalarını `forge/`'a kopyalamak; `docs/LIVE_LISTING_FIXES.md` ile 6 ilanı güncellemek; bundle'a 3 dosyayı yüklemek; (önerilir) 01 ve 04 görsellerini yenilemek.
+
+**2026-10-24 — Faz B onaylandı** (kurucu: "Onaylıyorum, başla"; kurucunun lazer makinesi yok → B3 test kiti, testçiler Faz C'de kurallara uygun bulunacak).
+- B1 ✅ `remove_directional_light` (batch_factory): yönlü ışık izi, polar 1. harmonik ile yalnız dış bantlardan (r ≥ 0.50R) çıkarılır; merkez konuya dokunulmaz; eksen güveni < 0.5 ise uygulanmaz; `--no-delight` ile kapatılır. Ölçüt: dış bant eğimi medyanı (QA eşiği %10).
+  Gerçek 5 üründe önce → sonra: Fenrir %10.5→5.4, Valkyrie %14.4→3.3, Yggdrasil %18.1→4.1, Thor %30.3→7.0, Odin %10.9→4.6 (detay korelasyonu 0.93–0.98). 11/11 test geçti.
+  Sınır: küçük detayların kendi aydınlık/gölge yanları kalır → lazer odaklı konumlandırma doğru; kaynak görselde düz ışık şart (B2).

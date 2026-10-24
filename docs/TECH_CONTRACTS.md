@@ -1,6 +1,6 @@
 # Teknik sozlesmeler (kod degistirirken oku; degistirme, gerekirse haber ver)
 
-- **Depth map (Standard):** 8-bit `L`, 4000x4000, 300 DPI (`pHYs`), dairesel maske, disi saf `#000000`. Ton: beyaz = yuksek/kesilmemis, siyah = en derin. Islem: gri -> CLAHE(clipLimit=3.0, 8x8) -> Bilateral x2 -> persentil germe -> Lanczos4 -> maske.
+- **Depth map (Standard):** 8-bit `L`, 4000x4000, 300 DPI (`pHYs`), dairesel maske, disi saf `#000000`. Ton: beyaz = yuksek/kesilmemis, siyah = en derin. Islem: gri -> `remove_directional_light` (Faz B1: polar 1. harmonik, isik ekseni dis bantlardan; yalniz r>=0.50R, tam etki 0.62R; eksen guveni <0.5 ise atlanir; QA: dis bant egimi >%10 ise notlarda `!! QA`; `--no-delight` ile kapatilir) -> CLAHE(clipLimit=3.0, 8x8) -> Bilateral x2 -> persentil germe -> Lanczos4 -> maske.
 - **Isik modeli (mockup):** sol-ust 45 derece, `L=(-0.5,-0.5,0.7071)`, goruntu koordinati x sag / y asagi, normal `n=(-gx,-gy,1)`, Sobel ksize=3 /8.
 - **Ahsap mockup:** 4 mm oyma ~ 24 px yukseklik olcegi; AO + golge isin izleme + color burn. Procedural ceviz (NumPy fbm), harici doku yok.
 - **Pirinc mockup:** 62 px yukseklik olcegi, patina + specular (keskin ^90 + genis ^14), koyu antrasit zemin, drop shadow.

@@ -154,3 +154,42 @@ def test_no_calibration_claims_in_product_text():
     pat = re.compile(r"(pre|precision)[- ]calibrated", re.I)
     for p in ROOT.glob("*.py"):
         assert not pat.search(p.read_text(encoding="utf-8")), p.name
+
+
+# --------------------------------------------------------------------------- #
+# Faz B1: isik izi temizleme
+# --------------------------------------------------------------------------- #
+def _lit_medallion(light_amp: float, seed: int = 3):
+    """WORK boyutunda halkali sentetik madalyon; dis bantlara ustten isik egimi (cos) eklenir."""
+    import first_launch_builder as flb
+    s = flb.WORK_SIZE
+    rng = np.random.default_rng(seed)
+    yy, xx = np.mgrid[:s, :s].astype(np.float32)
+    c = (s - 1) / 2
+    r, th = np.hypot(xx - c, yy - c), np.arctan2(yy - c, xx - c)
+    R = s / 2 / 1.03 * 0.994 - 1.5
+    rings = 128 + 50 * np.sin(r / 9.0) + rng.normal(0, 4, (s, s))
+    lit = light_amp * np.clip((r / R - 0.55) / 0.1, 0, 1) * (-np.sin(th))       # ust (sin<0) parlak
+    gray = np.clip(rings + lit, 0, 255).astype(np.uint8)
+    mask = bf.feather_circle(s, R, 1.25)
+    gray[mask <= 0.5] = np.uint8(gray[mask > 0.5].mean())      # auto_depth_normalizer gibi: disari notr
+    return gray, mask, r / R
+
+
+def test_delight_removes_directional_light_and_keeps_center():
+    import first_launch_builder as flb
+    gray, mask, rn = _lit_medallion(45.0)
+    out, phi, conf = bf.remove_directional_light(gray, mask)
+    assert phi is not None and conf >= bf.DELIGHT_MIN_CONF
+    assert abs((np.degrees(phi) % 180) - 90) < 10, f"eksen dikey olmali: {np.degrees(phi) % 180:.1f}"
+    before = bf.light_bias_pct(flb.build_depth_map(gray, mask), phi)
+    after = bf.light_bias_pct(flb.build_depth_map(out, mask), phi)
+    assert after <= 0.4 * before, f"egim yeterince azalmadi: %{before:.1f} -> %{after:.1f}"
+    center = rn < 0.45
+    assert np.abs(out[center].astype(int) - gray[center].astype(int)).max() <= 1, "merkez konu degismemeli"
+
+
+def test_delight_leaves_unlit_image_alone():
+    gray, mask, _ = _lit_medallion(0.0)
+    out, phi, conf = bf.remove_directional_light(gray, mask)
+    assert phi is None or np.abs(out.astype(int) - gray.astype(int)).mean() < 1.0
