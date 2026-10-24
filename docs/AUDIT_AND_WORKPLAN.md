@@ -189,3 +189,6 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 - C2 ✅ `pin_scheduler.py`: elle zamanlama takvimi (`PINTEREST_SCHEDULE.md`, ET + TR saati, günde 2, aynı ürün art arda yok), `links.json` (yalnız https etsy.com/etsy.me), opsiyonel toplu CSV (`--media-base-url`).
 - `docs/PINTEREST_SETUP.md`: hesap, panolar, haftalık rutin, yapma listesi, ölçüm. 13/13 test geçti.
 - Bekleyen: kurucudan 6 ilan linki; hesap açılışı. Sonra C5 (test kiti + topluluk şablonları), C6 (ölçüm tablosu).
+- Kurucu kararı (2026-10-24): ilk etapta pinler **elle** (Pinterest zamanlayıcısı). Pinterest resmi API otomasyonu (`pin_publisher.py`) ve RSS otomatik yayını **tüm işler bittikten sonra**; yeni ilan olmadığı için acele yok.
+- C5 ✅ `docs/COMMUNITY_PLAYBOOK.md`: kural kontrol listesi, aday topluluklar, Şablon A (reklamsız teknik ipucu + önce/sonra görseli), Şablon B (testçi çağrısı, yorum şartı yok), cevap şablonları.
+- C6 ✅ `docs/WEEKLY_METRICS.md`: haftalık 7 sayı + karar kuralları + kayıt tablosu.

@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Bekleyen tek seferlik Etsy gorevi YOK (`ONE_TIME_TASK_ETSY_UPDATE.md` ve `ONE_TIME_TASK_PNG_SWAP.md` TAMAMLANDI; tekrar yapma).
-> **DURUM (2026-10-24):** Faz B TAMAM. Faz C onaylandi; kurucu karari: trafik YALNIZ Pinterest (YouTube/TikTok tum isler bittikten sonra konusulacak), Pinterest hesabi YOK (acilacak). C1 `traffic_cannon.py` (16 pin) + C2 `pin_scheduler.py` + `docs/PINTEREST_SETUP.md` kodda. Bekleyen: kurucudan 6 Etsy ilan linki (links.json), hesap acilisi; sonra C5 topluluk sablonlari, C6 olcum.
+> **DURUM (2026-10-24):** Faz B TAMAM. Faz C: trafik YALNIZ Pinterest; ilk etapta pinler ELLE (Pinterest zamanlayicisi). Kurucu karari: Pinterest API otomasyonu (`pin_publisher.py`, RSS) TUM ISLER BITTIKTEN SONRA; YouTube/TikTok da sona. C1/C2 + `docs/PINTEREST_SETUP.md`, C5 `docs/COMMUNITY_PLAYBOOK.md`, C6 `docs/WEEKLY_METRICS.md` hazir. Bekleyen: Pinterest hesap acilisi + 6 Etsy ilan linki (links.json -> takvim yeniden).
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
@@ -35,4 +35,4 @@ Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; f
 ## 6. Yol haritasi (yonetici durumu)
 Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Canli 6 ilan guncellendi (kullanici beyani, 2026-10-24). Kullanicinin forge/ klasorundeki .py dosyalari eski olabilir (yeni surumler gonderildi; kopyalandigi teyit edilmedi).
 Faz B TAMAM (B3 kitinin geri bildirimi bekleniyor). Faz C devam (Pinterest elle zamanlama; C1/C2 kodda). Sonra Faz D.
-Bekleyen kurucu kararlari: YouTube/Shorts (ertelendi, sona), scout_engine resmi kaynak onayi.
+Ertelenenler (sona): Pinterest API otomasyonu + RSS, YouTube/Shorts. Bekleyen karar: scout_engine resmi kaynak onayi.
