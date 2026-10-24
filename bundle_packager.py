@@ -46,6 +46,7 @@ S = flb.MOCK_SIZE
 PLACEHOLDER_URL = "https://drive.google.com/PASTE-YOUR-DRIVE-LINK-HERE"
 
 COVER_NAME = "01_Bundle_Hero_Collage.jpg"
+MAX_LABELED_TILES = 12
 PDF_NAME = "Download_Instructions_and_License.pdf"
 
 
@@ -133,7 +134,8 @@ def make_bundle_cover(products: list[Path], out_path: Path, title: str, top_titl
 
     # Madalyon izgarasi
     tiles = pick_tiles(products)
-    label_h = 62
+    labeled = len(tiles) <= MAX_LABELED_TILES                 # buyuk pakette etiketler ust uste biner
+    label_h = 62 if labeled else 0
     gx0, gy0, gw, gh, gap = 60, 235, S - 120, 1400, 26
     cols, rows, cell = best_grid(len(tiles), gw, gh, gap, label_h)
     total_h = rows * (cell + label_h) + (rows - 1) * gap
@@ -157,6 +159,8 @@ def make_bundle_cover(products: list[Path], out_path: Path, title: str, top_titl
         img.paste(ct, (x, y), ct)
         d = ImageDraw.Draw(img)
         d.ellipse((x - 2, y - 2, x + cell + 1, y + cell + 1), outline=bf.AMBER_HI, width=4)
+        if not labeled:
+            continue
         cap = pretty(prod.name).upper()
         flb.draw_tracked(d, x + cell / 2, y + cell + 34, cap,
                          flb.load_font(fit_size(d, cap, 32, cell, 3, 18)), (244, 220, 168), 3)
