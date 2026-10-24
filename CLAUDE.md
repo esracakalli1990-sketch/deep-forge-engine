@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
-> **YEREL OTURUM ISE:** Kullanici seni Etsy guncellemesi icin actiysa yalnizca `docs/ONE_TIME_TASK_ETSY_UPDATE.md` gorevini yap (tek seferlik), bitince oradaki bitis mesajini yaz ve dur.
-> **DURUM (2026-10-24):** Faz B onaylandi (kurucunun lazeri yok). B1 (`remove_directional_light`) + B2 (`docs/PROMPT_LIBRARY.md`) kodda/push'lu. B4: 5 urun delight ile yeniden uretildi, once/sonra kurucuya gosterildi; canli PNG degisimi icin kurucu onayi BEKLENIYOR. Sonra B3 test kiti.
+> **YEREL OTURUM ISE:** Kullanici seni Etsy icin actiysa yalnizca `docs/ONE_TIME_TASK_PNG_SWAP.md` gorevini yap (tek seferlik; eski `ONE_TIME_TASK_ETSY_UPDATE.md` TAMAMLANDI, tekrar yapma), bitince oradaki bitis mesajini yaz ve dur.
+> **DURUM (2026-10-24):** Faz B: B1 (`remove_directional_light`) + B2 (`docs/PROMPT_LIBRARY.md`) push'lu. B4 kurucu onayli: `PNG_GUNCELLEME.zip` (5x2 PNG + bundle 2 ZIP) kurucuya gonderildi; yerel oturum `ONE_TIME_TASK_PNG_SWAP.md` ile degistirecek. Kullanici "geri geldim" deyince: sonucu sor/dogrula, sonra B3 test kiti.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 

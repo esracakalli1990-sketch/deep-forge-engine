@@ -179,3 +179,5 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 - B1 ✅ `remove_directional_light` (batch_factory): yönlü ışık izi, polar 1. harmonik ile yalnız dış bantlardan (r ≥ 0.50R) çıkarılır; merkez konuya dokunulmaz; eksen güveni < 0.5 ise uygulanmaz; `--no-delight` ile kapatılır. Ölçüt: dış bant eğimi medyanı (QA eşiği %10).
   Gerçek 5 üründe önce → sonra: Fenrir %10.5→5.4, Valkyrie %14.4→3.3, Yggdrasil %18.1→4.1, Thor %30.3→7.0, Odin %10.9→4.6 (detay korelasyonu 0.93–0.98). 11/11 test geçti.
   Sınır: küçük detayların kendi aydınlık/gölge yanları kalır → lazer odaklı konumlandırma doğru; kaynak görselde düz ışık şart (B2).
+- B2 ✅ `docs/PROMPT_LIBRARY.md` (düz ışık kaynak görsel kalıpları + QA kapısı + manuel kontrol).
+- B4 ✅ kurucu onayı: 5 ürün delight ile yeniden üretildi, bundle ZIP'leri yenilendi (PDF aynı); `PNG_GUNCELLEME.zip` + `docs/ONE_TIME_TASK_PNG_SWAP.md` (yerel oturum değiştirecek).
