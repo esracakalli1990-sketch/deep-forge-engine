@@ -1,6 +1,6 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
-> **YEREL OTURUM ISE:** Bekleyen tek seferlik Etsy gorevi YOK (`ONE_TIME_TASK_ETSY_UPDATE.md` ve `ONE_TIME_TASK_PNG_SWAP.md` TAMAMLANDI; tekrar yapma).
+> **YEREL OTURUM ISE:** Kullanici seni Pinterest icin actiysa yalnizca `docs/ONE_TIME_TASK_PINTEREST_PINS.md` gorevini yap (tek seferlik, kullanici gozetiminde), bitince oradaki bitis mesajini yaz ve dur. Etsy gorevleri (`ONE_TIME_TASK_ETSY_UPDATE.md`, `ONE_TIME_TASK_PNG_SWAP.md`) TAMAMLANDI; tekrar yapma.
 > **DURUM (2026-10-24):** Faz B TAMAM. Faz C: trafik YALNIZ Pinterest; ilk etapta pinler ELLE (Pinterest zamanlayicisi). Kurucu karari: Pinterest API otomasyonu (`pin_publisher.py`, RSS) TUM ISLER BITTIKTEN SONRA; YouTube/TikTok da sona. C1/C2 + `docs/PINTEREST_SETUP.md`, C5 `docs/COMMUNITY_PLAYBOOK.md`, C6 `docs/WEEKLY_METRICS.md` hazir. 6 ilan linki `links.json`'da (ID'ler: Fenrir 4601158125, Valkyrie 4601187128, Yggdrasil 4601190170, Thor 4601165553, Odin 4601194528, Bundle 4601175685); linkli takvim (2026-10-26 basliyor) gonderildi. Pinterest Business hesabi ACILDI (pinterest.com/forgedepthstudio, 2026-10-24); sirada 3 pano + pin kurulumu.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
