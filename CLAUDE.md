@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Kullanici seni Etsy guncellemesi icin actiysa yalnizca `docs/ONE_TIME_TASK_ETSY_UPDATE.md` gorevini yap (tek seferlik), bitince oradaki bitis mesajini yaz ve dur.
-> **DURUM (2026-10-24):** Etsy guncellemesi yerel oturumda yapildi (kullaniciya gore 6 ilan duzenlendi; bulut Etsy'ye erisemedigi icin dogrulama icin Listings ekran goruntusu istendi). **Kullanici acikca soyleyene kadar Faz B'ye GECME; haber bekle.**
+> **DURUM (2026-10-24):** Etsy guncellemesi DOGRULANDI (Listings ekran goruntusu): 6 ilan Active, yeni basliklar ve ahsap kapaklar (LASER READY rozeti) canlida; bundle kapagi yeni kolaj. Aciklama/etiket/dijital dosyalar ekrandan gorulemedi. **Kullanici acikca soyleyene kadar Faz B'ye GECME; haber bekle.**
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
@@ -26,7 +26,7 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 ## 4. Depo (bulut) ve kullanici PC'si
 - Kod: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`; testler `tests/` (`python -m pytest -q`), CI `.github/workflows/ci.yml`. `inputs/ outputs/ *.mp4 *.zip bot_profile/ .env` git disi.
 - Kullanicinin `forge/` klasoru repo ile birebir ayni (2026-10-23). `traffic_cannon.py` HIC YAZILMAMIS (handover'daki "MEVCUT" bilgisi yanlis) -> Faz C'de kurallara uygun yazilacak.
-- **Gercek set (Etsy ekran goruntusuyle dogrulandi 2026-10-24):** 01_Fenrir_Wolf, 02_Valkyrie_Warrior, 03_Yggdrasil_Tree, 04_Thor_Mjolnir, 05_Odin_Allfather + bundle. Handover'daki "04 Vegvisir" YANLIS (4. urun Thor cekici). Canli basliklar eski seo_generator ciktisi (Thor basliginda "CNC Router", aciklamalarda "pre-calibrated" var). Fenrir ilaninin kapak fotografi 04 Comparison (kural: 01 Wood).
+- **Gercek set (Etsy ekran goruntusuyle dogrulandi 2026-10-24):** 01_Fenrir_Wolf, 02_Valkyrie_Warrior, 03_Yggdrasil_Tree, 04_Thor_Mjolnir, 05_Odin_Allfather + bundle. Handover'daki "04 Vegvisir" YANLIS (4. urun Thor cekici). Canli ilanlar 2026-10-24'te yeni seo_generator ciktisi + yeni gorsellerle guncellendi.
 - Kullanici git/GitHub Desktop kullanmakta zorlaniyor: dosya alisverisi sohbete surukle-birak + SendUserFile ile.
 
 ## 5. Calisma kurallari
