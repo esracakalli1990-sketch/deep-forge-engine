@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Kullanici seni pazar arastirmasi icin actiysa yalnizca `docs/ONE_TIME_TASK_SCOUT.md` gorevini yap (tek seferlik), bitince bitis mesajini yaz ve dur. Etsy x2 ve Pinterest pin gorevleri TAMAMLANDI; tekrar yapma.
-> **DURUM (2026-10-24):** Faz C bitti (16 pin planli 26.10-03.11). **Kurucu onceligi: PAZAR ARASTIRMASI** (`docs/MARKET_RESEARCH.md`): 100+ parcalik $10 setlerle adetle yarisilamaz; sinyal: Norse nisi zayif, fiber lazer coin/derin rolyef depth map guclu. Kurucu karari: Etsy API anahtari alacak -> `scout_engine.py` (resmi API, yerel gorev) + urune 16-bit PNG + STL eklendi (kodda). Bekleyen: kurucu API anahtari (`docs/ETSY_API_SETUP.md`) -> SCOUT raporu -> nis karari. Faz D bu verilere gore yeniden planlanacak.
+> **DURUM (2026-10-24):** SCOUT verisi geldi (`docs/MARKET_RESEARCH.md`, `docs/data/`): depth map pazari kucuk, kazanan = MEGA BUNDLE. Kurucu karari: **B sonra A** = once 50'lik Noel depth map paketi (~$9.99, Kasim penceresi), sonra 500-1000'lik Mega Bundle. Kaynak gorsel: Higgsfield MCP (z_image 0.15 kr/gorsel; kurucu 10 kredi, free plan; ticari kullanim sarti DOGRULANMADI). Bulut ag izni: d8j0ntlcm91z4.cloudfront.net acildi -> uret/indir/isle bulutta otomatik. 4 Noel test gorseli basarili (isik izi %14-33 -> %3-5). Norse'a yeni yatirim yok.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
