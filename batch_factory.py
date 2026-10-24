@@ -546,6 +546,14 @@ def inverted_name(name: str) -> str:
     return f"{name}_3D_DepthMap_INVERTED_300DPI.png"
 
 
+def depth16_name(name: str, inverted: bool = False) -> str:
+    return f"{name}_3D_DepthMap_{'INVERTED_' if inverted else ''}16bit.png"
+
+
+def stl_name(name: str) -> str:
+    return f"{name}_3D_Relief_50mm.stl"
+
+
 def make_inverted(g: np.ndarray, m: np.ndarray) -> np.ndarray:
     """Madalyonun ICI ters (255 - ton); cember DISI maske ile saf #000000 kalir."""
     return np.clip((255.0 - g.astype(F32)) * m + 0.5, 0, 255).astype(np.uint8)
@@ -574,13 +582,15 @@ def verify_depth(path: Path) -> str:
 
 
 def process_product(name: str, src: str, out_root: str, no_video: bool, skip_existing: bool,
-                    delight: bool = True) -> dict:
+                    delight: bool = True, extras: bool = True) -> dict:
     t0 = time.time()
     out_dir = Path(out_root) / name
     depth_name = f"{name}_3D_DepthMap_300DPI.png"
     res = {"name": name, "status": "ok", "notes": [], "seconds": 0.0, "error": ""}
     try:
         need = [depth_name, inverted_name(name)] + FILES[:-1] + ([] if no_video else [FILES[-1]])
+        if extras:
+            need += [depth16_name(name), depth16_name(name, True), stl_name(name)]
         if skip_existing and all((out_dir / f).is_file() for f in need):
             res["status"] = "skipped"
             return res
@@ -613,6 +623,16 @@ def process_product(name: str, src: str, out_root: str, no_video: bool, skip_exi
         flb.save_png(inv, out_dir / inverted_name(name))
         res["notes"].append("inverted " + verify_depth(out_dir / inverted_name(name)))
         del g_tone, m_full, inv
+
+        if extras:                                           # 16-bit cift + STL rolyef (fiber/3D yazilim)
+            d16, i16 = flb.build_depth_map16(gray, mask)
+            for arr, fn in ((d16, depth16_name(name)), (i16, depth16_name(name, True))):
+                flb.save_png16(arr, out_dir / fn)
+            n_tri = flb.write_relief_stl(d16, out_dir / stl_name(name))
+            mb = [(out_dir / f).stat().st_size / 1e6 for f in (depth16_name(name), depth16_name(name, True), stl_name(name))]
+            flag = "" if max(mb) < 20 else "  !! >20 MB (Etsy siniri)"
+            res["notes"].append(f"16-bit {mb[0]:.1f}/{mb[1]:.1f} MB, STL {n_tri} ucgen {mb[2]:.1f} MB{flag}")
+            del d16, i16
 
         wood_img = flb.render_wood_mockup(depth)
         flb.save_jpg(wood_img, out_dir / FILES[0])
@@ -652,6 +672,7 @@ def main() -> int:
     ap.add_argument("--no-video", action="store_true", help="MP4 uretme (hizli)")
     ap.add_argument("--workers", type=int, default=1, help="paralel urun sayisi (her biri ~2 GB RAM)")
     ap.add_argument("--no-delight", action="store_true", help="isik izi temizlemeyi kapat (karsilastirma icin)")
+    ap.add_argument("--no-extras", action="store_true", help="16-bit PNG ve STL uretme")
     args = ap.parse_args()
 
     if not args.inputs.is_dir():
@@ -668,7 +689,7 @@ def main() -> int:
     results: list[dict] = []
     t0 = time.time()
     job_args = lambda n, p: (n, str(p), str(args.outputs), args.no_video, args.skip_existing,  # noqa: E731
-                             not args.no_delight)
+                             not args.no_delight, not args.no_extras)
     if args.workers > 1 and len(jobs) > 1:
         with ProcessPoolExecutor(max_workers=args.workers) as ex:
             futs = {ex.submit(process_product, *job_args(n, p)): n for n, p in jobs}

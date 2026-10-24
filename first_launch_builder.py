@@ -97,9 +97,8 @@ def save_jpg(rgb01: np.ndarray | Image.Image, path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # 1) Depth map
 # --------------------------------------------------------------------------- #
-def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None, return_parts: bool = False):
-    """gray -> 4000x4000 8-bit depth map. `mask` (float32 0..1, WORK_SIZE x WORK_SIZE) verilmezse daire.
-    return_parts=True -> (depth, maskesiz ton g uint8, maske m float32): ters (inverted) harita icin."""
+def _tone_prep(gray: np.ndarray, mask: np.ndarray | None):
+    """Ortak on isleme: WORK boyut, CLAHE, bilateral x2, daire ici persentil sinirlari -> (g uint8, lo, hi)."""
     g = center_square(gray)
     interp = cv2.INTER_AREA if g.shape[0] > WORK_SIZE else cv2.INTER_LANCZOS4
     g = cv2.resize(g, (WORK_SIZE, WORK_SIZE), interpolation=interp)
@@ -108,18 +107,87 @@ def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None, return_par
     g = cv2.bilateralFilter(g, 9, 60, 9)
     g = cv2.bilateralFilter(g, 9, 40, 7)
 
-    # Daire icindeki tonlari 0-255'e ger (derinlik kontrasti)
     inside = (circle_mask(WORK_SIZE) if mask is None else mask) > 0.5
     lo, hi = np.percentile(g[inside], (0.5, 99.5))
+    return g, float(lo), float(hi)
+
+
+def _full_mask(mask: np.ndarray | None) -> np.ndarray:
+    if mask is None:
+        return circle_mask(DEPTH_SIZE)                  # disi saf #000000
+    return np.clip(cv2.resize(mask, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_CUBIC), 0.0, 1.0)
+
+
+def build_depth_map(gray: np.ndarray, mask: np.ndarray | None = None, return_parts: bool = False):
+    """gray -> 4000x4000 8-bit depth map. `mask` (float32 0..1, WORK_SIZE x WORK_SIZE) verilmezse daire.
+    return_parts=True -> (depth, maskesiz ton g uint8, maske m float32): ters (inverted) harita icin."""
+    g, lo, hi = _tone_prep(gray, mask)
+    # Daire icindeki tonlari 0-255'e ger (derinlik kontrasti)
     g = np.clip((g.astype(F32) - lo) / max(hi - lo, 1.0) * 255.0, 0, 255).astype(np.uint8)
 
     g = cv2.resize(g, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_LANCZOS4)
-    if mask is None:
-        m = circle_mask(DEPTH_SIZE)                  # disi saf #000000
-    else:
-        m = np.clip(cv2.resize(mask, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_CUBIC), 0.0, 1.0)
+    m = _full_mask(mask)
     depth = np.clip(g.astype(F32) * m + 0.5, 0, 255).astype(np.uint8)
     return (depth, g, m) if return_parts else depth
+
+
+DEPTH16_SMOOTH = 1.2      # 4000 px'te Gauss sigma: 8-bit basamaklarini (terracing) yumusatir
+
+
+def build_depth_map16(gray: np.ndarray, mask: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """Ayni ton zinciri, ara adimlar float: 4000x4000 16-bit (Standard, Inverted) uint16.
+    Kaynak 8-bit oldugu icin ek detay yok; kazanc = basamaksiz yumusak gecis (fiber/3D katmanli gravur)."""
+    g, lo, hi = _tone_prep(gray, mask)
+    gf = np.clip((g.astype(F32) - lo) / max(hi - lo, 1.0), 0, 1)
+    gf = cv2.resize(gf, (DEPTH_SIZE, DEPTH_SIZE), interpolation=cv2.INTER_LANCZOS4)
+    gf = np.clip(cv2.GaussianBlur(gf, (0, 0), DEPTH16_SMOOTH), 0, 1)
+    m = _full_mask(mask)
+    std = np.clip(gf * m * 65535.0 + 0.5, 0, 65535).astype(np.uint16)
+    inv = np.clip((1.0 - gf) * m * 65535.0 + 0.5, 0, 65535).astype(np.uint16)
+    return std, inv
+
+
+def save_png16(arr: np.ndarray, path: Path) -> None:
+    """uint16 gri PNG (300 DPI)."""
+    Image.fromarray(arr.astype(np.uint16), mode="I;16").save(path, format="PNG", dpi=DPI)
+
+
+def write_relief_stl(depth: np.ndarray, path: Path, size_mm: float = 50.0, relief_mm: float = 2.0,
+                     base_mm: float = 1.0, grid: int = 320) -> int:
+    """Depth (8/16-bit, beyaz = yuksek) -> kapali (su gecirmez) binary STL kare rolyef karo.
+    Ust yuzey grid x grid yukseklik alani + yan duvarlar + taban. Ucgen sayisini dondurur."""
+    d = depth.astype(F32)
+    d /= 65535.0 if depth.dtype == np.uint16 else 255.0
+    h = cv2.resize(d, (grid, grid), interpolation=cv2.INTER_AREA)
+    z = base_mm + relief_mm * h[::-1]                       # goruntu satiri ust = +Y
+    n = grid
+    xs = np.linspace(0.0, size_mm, n, dtype=F32)
+    X, Y = np.meshgrid(xs, xs)
+    top = np.stack([X, Y, z], axis=-1)
+
+    def quads(a, b, c, d_):                                  # her dortgen -> 2 ucgen (a,b,c) (a,c,d)
+        return np.concatenate([np.stack([a, b, c], 1), np.stack([a, c, d_], 1)])
+
+    tris = [quads(top[:-1, :-1].reshape(-1, 3), top[:-1, 1:].reshape(-1, 3),
+                  top[1:, 1:].reshape(-1, 3), top[1:, :-1].reshape(-1, 3))]
+    # Kenar halkasi (ustten bakista saat yonu tersi): yan duvarlar + merkezden yelpaze taban (T-kesisim yok)
+    ring_t = np.concatenate([top[0, :-1], top[:-1, -1], top[-1, :0:-1], top[:0:-1, 0]])
+    ring_b = ring_t.copy()
+    ring_b[:, 2] = 0.0
+    nxt_t, nxt_b = np.roll(ring_t, -1, 0), np.roll(ring_b, -1, 0)
+    tris.append(np.concatenate([np.stack([ring_b, nxt_b, nxt_t], 1), np.stack([ring_b, nxt_t, ring_t], 1)]))
+    center = np.broadcast_to(np.array([size_mm / 2, size_mm / 2, 0.0], F32), ring_b.shape)
+    tris.append(np.stack([center, nxt_b, ring_b], 1))
+    tri = np.concatenate(tris).astype(F32)
+    nrm = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
+    rec = np.zeros(len(tri), dtype=[("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")])
+    rec["n"], rec["v"] = nrm, tri
+    with open(path, "wb") as f:
+        f.write(b"ForgeDepthStudio relief STL".ljust(80, b" "))
+        f.write(np.uint32(len(tri)).tobytes())
+        f.write(rec.tobytes())
+    return len(tri)
 
 
 # --------------------------------------------------------------------------- #

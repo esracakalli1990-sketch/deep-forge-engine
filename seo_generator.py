@@ -215,15 +215,29 @@ ABOUT THIS DESIGN
 Questions? Message ForgeDepthStudio on Etsy - we reply fast. Thank you!"""
 
 
-def describe_single(prof: dict, std_name: str, inv_name: str) -> str:
-    return f"""{prof['display'].upper()} - 3D LASER ENGRAVING DEPTH MAP | INSTANT DIGITAL DOWNLOAD
-
-{prof['blurb']} Two ready-to-use 4000x4000 px, 300 DPI, 8-bit grayscale 3D illusion depth maps for LightBurn, EZCAD, Glowforge and xTool - made for wood, slate coasters, brass and fiber-laser coins.
-
-WHAT YOU GET (2 PNG FILES)
+def describe_single(prof: dict, std_name: str, inv_name: str, extras: list[str] | None = None) -> str:
+    """extras = [16-bit std, 16-bit inv, STL] dosya adlari (varsa 5 dosyalik metin)."""
+    if extras:
+        d16, i16, stl = extras
+        files = f"""WHAT YOU GET (5 FILES)
+1) {std_name}  -  STANDARD 8-bit (black = deepest)
+2) {inv_name}  -  INVERTED 8-bit (white = deepest)
+3) {d16}  -  STANDARD 16-bit: smooth gradients with no visible stepping, for fiber/galvo and multi-pass 3D engraving
+4) {i16}  -  INVERTED 16-bit
+5) {stl}  -  STL relief tile, 50 x 50 mm (1 mm base + 2 mm relief), scale as needed - for 3D-capable laser software and 3D preview
+PNG files: 4000 x 4000 px | 300 DPI | grayscale | circular medallion on pure black (#000000)."""
+        lead = "Ready-to-use 4000x4000 px, 300 DPI depth maps in 8-bit and 16-bit, plus an STL relief"
+    else:
+        files = f"""WHAT YOU GET (2 PNG FILES)
 1) {std_name}  -  STANDARD (black = deepest)
 2) {inv_name}  -  INVERTED (white = deepest)
-Both: 4000 x 4000 px | 300 DPI | 8-bit grayscale | circular medallion on pure black (#000000).
+Both: 4000 x 4000 px | 300 DPI | 8-bit grayscale | circular medallion on pure black (#000000)."""
+        lead = "Two ready-to-use 4000x4000 px, 300 DPI, 8-bit grayscale 3D illusion depth maps"
+    return f"""{prof['display'].upper()} - 3D LASER ENGRAVING DEPTH MAP | INSTANT DIGITAL DOWNLOAD
+
+{prof['blurb']} {lead} for LightBurn, EZCAD, Glowforge and xTool - made for wood, slate coasters, brass and fiber-laser coins.
+
+{files}
 
 QUICK START - LIGHTBURN & EZCAD (starting points)
 {table(QUICK_START)}
@@ -311,14 +325,17 @@ def build_single(folder: Path, idx: int, price: float) -> dict:
     inv = next(folder.glob("*_3D_DepthMap_INVERTED_300DPI.png"), None)
     if inv is None:
         raise FileNotFoundError(f"{folder.name}: INVERTED depth map yok. Once `python batch_factory.py` calistir.")
+    extras = [next(folder.glob(g), None) for g in ("*_3D_DepthMap_16bit.png", "*_3D_DepthMap_INVERTED_16bit.png",
+                                                    "*_3D_Relief_50mm.stl")]
+    extras = extras if all(extras) else None
     photos = [("01_Wood_Mockup.jpg", "hero (ahsap oyma)"), ("04_Comparison_Split_Guide.jpg", "guven: ham depth map -> sonuc + teknik bilgi"),
               ("02_Brass_Mockup.jpg", "pirinc / fiber lazer"), ("03_Slate_Coaster_Mockup.jpg", "arduvaz coaster")]
     return dict(
         kind="single", folder=folder, name=prof["display"], title=title, tags=tags, price=price,
-        description=describe_single(prof, std.name, inv.name),
+        description=describe_single(prof, std.name, inv.name, [f.name for f in extras] if extras else None),
         photos=[(f, d) for f, d in photos if (folder / f).is_file()],
         video="05_Listing_Video.mp4" if (folder / "05_Listing_Video.mp4").is_file() else None,
-        upload=[(std.name, mb(std)), (inv.name, mb(inv))],
+        upload=[(std.name, mb(std)), (inv.name, mb(inv))] + [(f.name, mb(f)) for f in (extras or [])],
     )
 
 

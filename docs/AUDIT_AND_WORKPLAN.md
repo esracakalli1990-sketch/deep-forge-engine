@@ -194,3 +194,5 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 - C6 ✅ `docs/WEEKLY_METRICS.md`: haftalık 7 sayı + karar kuralları + kayıt tablosu.
 - Kurucu talebi: 16 pinin elle kurulumu yerel Claude oturumuna devredildi (`docs/ONE_TIME_TASK_PINTEREST_PINS.md`): tek seferlik, kullanıcı gözetiminde, insan hızında, ilk pin onaylı (Etsy görevleriyle aynı model). Sürekli/gözetimsiz tarayıcı botu kırmızı çizgisi aynen geçerli; kalıcı otomasyon = resmi API (sona).
 - ✅ 16 pin yerel oturumla planlandı (kurucu beyanı, 2026-10-24): 26.10–03.11.2026, günde 2. İlk haftalık ölçüm 2026-11-02.
+
+**2026-10-24 — Kurucu önceliği: pazar araştırması** (`docs/MARKET_RESEARCH.md`). Kararlar: Etsy API anahtarı alınacak → `scout_engine.py` (resmi API; yerel görev `ONE_TIME_TASK_SCOUT.md`); ürüne 16-bit PNG + STL eklendi (`build_depth_map16`, `write_relief_stl`; testli). Tekli ilan dijital dosyası 2 → 5 (2×8-bit, 2×16-bit, STL). Faz D niş verisine göre yeniden planlanacak.

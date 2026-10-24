@@ -16,3 +16,8 @@
 - **Bundle PDF:** reportlab, Letter, tek sayfa, tiklanabilir "CLICK HERE TO DOWNLOAD YOUR FILES" butonu (Drive linki `--download-url`), LightBurn tablosu (3D Slice / Jarvis / Stucki), ticari kullanim lisansi.
 - **Bundle teslim modlari:** `--delivery etsy` (varsayilan): ZIP'ler + PDF Etsy'ye; PDF'te link yok ("YOUR FILES ARE IN YOUR ETSY PURCHASE" + dosya listesi); Etsy siniri (<=5 dosya, her biri <=20 MB) kodda kontrol, asilirsa cikis 1. `--delivery drive`: gecerli `--download-url` yoksa cikis 1. Her calismada `bundle_manifest.json` (delivery, etsy_files) yazilir; `seo_generator` bundle'i kapak dosyasindan (`01_Bundle_Hero_Collage.jpg`) tanir ve yukleme listesini manifestten alir.
 - **SEO lazer odakli:** baslik/etiketlerde "cnc" yok, "calibrat" hicbir metinde yok, urun adi baslikta tam 1 kez, >=4 urune ozel etiket (genel havuz disi) — `check_uniqueness` assert eder.
+
+## Ek çıktılar (2026-10-24): 16-bit + STL
+- `build_depth_map16`: aynı ton zinciri, ara adımlar float; Lanczos4 4000 px + Gauss σ=1.2; `{ad}_3D_DepthMap_16bit.png` ve `_INVERTED_16bit.png` (uint16, `I;16`, 300 DPI, dışı 0). Std+Inv = 65535 (±1). ~18 MB.
+- `write_relief_stl`: 16-bit std → kapalı binary STL kare karo 50x50 mm, taban 1 mm + rölyef 2 mm, grid 320 (~207K üçgen, ~10 MB); `{ad}_3D_Relief_50mm.stl`. Test: manifold + pozitif hacim.
+- `batch_factory --no-extras` kapatır. Bundle ZIP'leri yalnız 8-bit (boyut sınırı).

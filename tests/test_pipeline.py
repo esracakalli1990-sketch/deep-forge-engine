@@ -102,6 +102,20 @@ def test_full_product_pipeline(tmp_path):
         with Image.open(d / f) as im:
             assert im.size == (2000, 2000), f
 
+    # 16-bit cift + STL
+    with Image.open(d / "Test_Medal_3D_DepthMap_16bit.png") as im:
+        assert im.mode.startswith("I;16") and im.size == (4000, 4000) and round(im.info["dpi"][0]) == 300
+        s16 = np.asarray(im).astype(np.int64)
+    i16 = np.asarray(Image.open(d / "Test_Medal_3D_DepthMap_INVERTED_16bit.png")).astype(np.int64)
+    assert s16[0, 0] == 0 and i16[0, 0] == 0
+    assert np.abs(s16[c, c] + i16[c, c] - 65535).max() <= 1
+    assert np.corrcoef(std[c, c].ravel(), s16[c, c].ravel())[0, 1] > 0.99
+    for f in d.iterdir():
+        assert f.stat().st_size < 20_000_000, f"{f.name} Etsy 20 MB sinirini asiyor"
+    raw = (d / "Test_Medal_3D_Relief_50mm.stl").read_bytes()
+    n = int(np.frombuffer(raw[80:84], "<u4")[0])
+    assert len(raw) == 84 + 50 * n and n > 100_000
+
 
 # --------------------------------------------------------------------------- #
 # SEO kurallari (gercek urun adlariyla)
@@ -256,3 +270,50 @@ def test_traffic_cannon_and_scheduler(tmp_path):
 
     links.write_text(json.dumps({"01_Fenrir_Wolf": "http://evil.example.com/x"}))
     assert run("pin_scheduler.py", "--outputs", str(tmp_path), "--links", str(links)).returncode == 1
+
+
+def test_relief_stl_is_watertight(tmp_path):
+    from collections import Counter
+    import first_launch_builder as flb
+    d = (np.random.default_rng(0).random((120, 120)) * 255).astype(np.uint8)
+    n = flb.write_relief_stl(d, tmp_path / "t.stl", grid=16)
+    v = np.frombuffer((tmp_path / "t.stl").read_bytes()[84:],
+                      dtype=[("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")])["v"].astype(np.float64)
+    assert len(v) == n
+    edges = Counter((tuple(t[i].round(4)), tuple(t[(i + 1) % 3].round(4))) for t in v for i in range(3))
+    assert all(c == 1 and edges.get((b, a), 0) == 1 for (a, b), c in edges.items()), "kapali/manifold degil"
+    vol = np.einsum("ij,ij->i", v[:, 0], np.cross(v[:, 1], v[:, 2])).sum() / 6
+    assert vol > 50 * 50 * 1.0                                   # disari bakan normaller, taban 1 mm
+
+
+# --------------------------------------------------------------------------- #
+# scout_engine (Etsy API sahte yanitlarla; ag yok)
+# --------------------------------------------------------------------------- #
+def test_scout_engine_with_fake_api():
+    import scout_engine as se
+    now = 1_800_000_000.0
+    listings = [dict(listing_id=i, shop_id=100 + i % 2, title=t, price=dict(amount=a, divisor=100), num_favorers=f,
+                     original_creation_timestamp=now - d * 86400)
+                for i, (t, a, f, d) in enumerate([("50 Coin Depth Maps Bundle", 999, 40, 60),
+                                                  ("Eagle Coin Depth Map", 499, 10, 400),
+                                                  ("Skull coin depth map", 399, 5, 30)])]
+    calls = []
+
+    def fetch(path, params):
+        calls.append(path)
+        if path == "/listings/active":
+            off = params["offset"]
+            return {"count": 1234, "results": listings[off:off + params["limit"]]}
+        if path.endswith("/reviews"):
+            return {"count": {0: 8, 1: 40, 2: 0}[int(path.split("/")[2])]}
+        return {"shop_name": f"S{path[-3:]}", "transaction_sold_count": 5000}
+
+    r = se.scout_keyword(fetch, "coin depth map", top=3, reviews=True, review_rate=0.08, shop_cache={}, now=now)
+    s, rows = r["summary"], r["listings"]
+    assert s["results"] == 1234 and s["sampled"] == 3
+    assert rows[0]["designs"] == 50 and rows[1]["designs"] == 1
+    assert rows[0]["est_sales"] == 100 and rows[0]["est_monthly"] == 50.7          # 8/0.08 = 100, ~2 ay
+    assert s["young_winners"] == 1 and s["median_price"] == 4.99
+    assert calls.count("/shops/100") + calls.count("/shops/101") == 2              # magaza onbellegi
+    md = se.render_report([r], 0.08)
+    assert "coin depth map" in md and "50 Coin Depth Maps Bundle" in md
