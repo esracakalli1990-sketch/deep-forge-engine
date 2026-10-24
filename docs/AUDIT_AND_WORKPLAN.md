@@ -181,3 +181,5 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
   Sınır: küçük detayların kendi aydınlık/gölge yanları kalır → lazer odaklı konumlandırma doğru; kaynak görselde düz ışık şart (B2).
 - B2 ✅ `docs/PROMPT_LIBRARY.md` (düz ışık kaynak görsel kalıpları + QA kapısı + manuel kontrol).
 - B4 ✅ kurucu onayı: 5 ürün delight ile yeniden üretildi, bundle ZIP'leri yenilendi (PDF aynı); `PNG_GUNCELLEME.zip` + `docs/ONE_TIME_TASK_PNG_SWAP.md` (yerel oturum değiştirecek).
+- B4 ✅ kurucu beyanı: 6 ilanın dijital dosyaları yerel oturumla değiştirildi (tekli 2 PNG, bundle 2 ZIP + PDF).
+- B3 ✅ `make_test_kit.py`: 1 tasarım (Standard + Inverted) + 1 sayfalık `Test_Guide.pdf` + `FEEDBACK_FORM.txt` (5 soru). Etsy teşvikli yorum yasağı gereği kit yorum/satın alma karşılığı değil; alıntı yalnız yazılı izinle. Kurucunun lazeri yok → dağıtım Faz C'de (topluluk kurallarına uygun, spam yok). Geri bildirim gelince B1 eşikleri/ayar önerileri gözden geçirilecek.

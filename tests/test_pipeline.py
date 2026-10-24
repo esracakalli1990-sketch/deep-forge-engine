@@ -193,3 +193,20 @@ def test_delight_leaves_unlit_image_alone():
     gray, mask, _ = _lit_medallion(0.0)
     out, phi, conf = bf.remove_directional_light(gray, mask)
     assert phi is None or np.abs(out.astype(int) - gray.astype(int)).mean() < 1.0
+
+
+# --------------------------------------------------------------------------- #
+# Faz B3: test kiti
+# --------------------------------------------------------------------------- #
+def test_make_test_kit(tmp_path):
+    import zipfile
+    fake_product(tmp_path, "01_Fenrir_Wolf", png_bytes=1000)
+    r = run("make_test_kit.py", "--product", "01_Fenrir_Wolf", "--outputs", str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    z = tmp_path / "_TEST_KIT" / "ForgeDepthStudio_Test_Kit_Fenrir_Wolf.zip"
+    names = sorted(Path(n).name for n in zipfile.ZipFile(z).namelist())
+    assert names == ["01_Fenrir_Wolf_3D_DepthMap_300DPI.png", "01_Fenrir_Wolf_3D_DepthMap_INVERTED_300DPI.png",
+                     "FEEDBACK_FORM.txt", "Test_Guide.pdf"]
+    form = (z.with_suffix("") / "FEEDBACK_FORM.txt").read_text(encoding="utf-8").lower()
+    assert "not asked" in form and "review" in form and "calibrat" not in form     # tesvikli yorum yok
+    assert run("make_test_kit.py", "--product", "99_Missing", "--outputs", str(tmp_path)).returncode == 1
