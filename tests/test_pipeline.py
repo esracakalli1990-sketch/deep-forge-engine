@@ -251,6 +251,8 @@ def test_traffic_cannon_and_scheduler(tmp_path):
     assert {x["link"] for x in rows if x["product"] == "01_Fenrir_Wolf"} == {"https://www.etsy.com/listing/123/fenrir"}
     assert {x["link"] for x in rows if x["product"] != "01_Fenrir_Wolf"} == {"https://forgedepthstudio.etsy.com"}
     assert (tdir / "pinterest_bulk.csv").read_text(encoding="utf-8").count("\n") == 7
+    html = (tdir / "PIN_KOPYALA.html").read_text(encoding="utf-8")
+    assert html.count("<section") == 6 and "https://www.etsy.com/listing/123/fenrir" in html
 
     links.write_text(json.dumps({"01_Fenrir_Wolf": "http://evil.example.com/x"}))
     assert run("pin_scheduler.py", "--outputs", str(tmp_path), "--links", str(links)).returncode == 1

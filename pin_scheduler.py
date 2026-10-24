@@ -6,7 +6,7 @@ Siralama: once tum Hero pinleri (+bundle), sonra Process, sonra Materials; ayni 
 Girdi : outputs/_Traffic_Cannon/pins.json  (traffic_cannon.py)
         --links links.json  {"_shop": "...", "01_Fenrir_Wolf": "https://www.etsy.com/listing/...", ...}
         (yoksa sablon yazilir; bos link -> magaza linki + uyari)
-Cikti : outputs/_Traffic_Cannon/PINTEREST_SCHEDULE.md, schedule.json
+Cikti : outputs/_Traffic_Cannon/PINTEREST_SCHEDULE.md, PIN_KOPYALA.html (kopyala dugmeli), schedule.json
         --media-base-url verilirse pinterest_bulk.csv (Pinterest toplu yukleme; gorseller herkese acik URL'de olmali)
 
 Kullanim: python pin_scheduler.py --start 2026-10-26 [--per-day 2] [--links links.json] [--media-base-url https://...]
@@ -106,6 +106,38 @@ def render_md(rows: list[dict], warns: list[str]) -> str:
     return "\n".join(L)
 
 
+def render_html(rows: list[dict]) -> str:
+    """Tarayicida acilan kopyala-yapistir sayfasi: her alanin yaninda Kopyala dugmesi, pin bitince isaretle."""
+    from html import escape
+    cards = []
+    for i, r in enumerate(rows, 1):
+        tr = f" / TR {r['time_local']}" if r["time_local"] else ""
+        fields = [("Baslik", r["title"]), ("Aciklama", r["description"]), ("Baglanti", r["link"]),
+                  ("Pano", r["board"]), ("Alternatif metin", r["alt_text"])]
+        rows_html = "".join(
+            f'<div class="f"><b>{k}</b><button onclick="cp(this)">Kopyala</button><pre>{escape(v)}</pre></div>'
+            for k, v in fields)
+        cards.append(f'<section id="p{i}"><h2><label><input type="checkbox" onchange="done({i},this)"> '
+                     f'#{i} &middot; Gun {r["day"]} &middot; {r["date"]} {r["time_et"]} ET{tr}</label></h2>'
+                     f'<div class="file">Gorsel: {escape(r["file"])}</div>{rows_html}</section>')
+    return """<!doctype html><html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Pinterest Pin Kopyala</title>
+<style>body{font-family:system-ui,sans-serif;background:#f4f1ea;color:#1b1d21;margin:0;padding:16px;max-width:900px}
+section{background:#fff;border-radius:10px;padding:12px 16px;margin:12px 0;box-shadow:0 1px 3px #0002}
+section.ok{opacity:.45}h2{font-size:17px;margin:4px 0 6px}.file{color:#5b5f66;font-size:14px;margin-bottom:6px}
+.f{border-top:1px solid #eee;padding:6px 0}.f b{display:inline-block;width:140px}
+pre{white-space:pre-wrap;margin:4px 0 0;font:14px system-ui}button{background:#D49A36;border:0;border-radius:6px;
+padding:5px 12px;font-weight:600;cursor:pointer}button.c{background:#2e8b57;color:#fff}</style></head><body>
+<h1>Pinterest pinleri &mdash; kopyala / yapistir</h1>
+<p>Soldaki taslagi sec, alanlari buradan kopyala. Saat/tarih: <b>Daha sonra yayinla</b> kismina TR saatini gir.
+Bitirdigin pinin kutusunu isaretle (bu tarayicida hatirlanir).</p>""" + "".join(cards) + """
+<script>function cp(b){navigator.clipboard.writeText(b.nextElementSibling.textContent).then(function(){
+b.textContent='Kopyalandi';b.className='c';setTimeout(function(){b.textContent='Kopyala';b.className=''},1500)})}
+function done(i,c){document.getElementById('p'+i).className=c.checked?'ok':'';try{localStorage.setItem('pin'+i,c.checked?'1':'')}catch(e){}}
+document.querySelectorAll('section').forEach(function(s,k){var i=k+1,v='';try{v=localStorage.getItem('pin'+i)}catch(e){}
+if(v){s.className='ok';s.querySelector('input').checked=true}});</script></body></html>"""
+
+
 def write_csv(rows: list[dict], path: Path, base_url: str) -> None:
     if not base_url.startswith("https://"):
         raise ValueError("--media-base-url https:// ile baslamali")
@@ -131,6 +163,7 @@ def main() -> int:
         links, warns = load_links(args.links, pins)
         rows = build_schedule(pins, links, date.fromisoformat(args.start), args.per_day)
         (tdir / "PINTEREST_SCHEDULE.md").write_text(render_md(rows, warns), encoding="utf-8")
+        (tdir / "PIN_KOPYALA.html").write_text(render_html(rows), encoding="utf-8")
         (tdir / "schedule.json").write_text(json.dumps(rows, indent=1, ensure_ascii=False), encoding="utf-8")
         if args.media_base_url:
             write_csv(rows, tdir / "pinterest_bulk.csv", args.media_base_url)
