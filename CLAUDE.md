@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Kullanici seni pazar arastirmasi icin actiysa yalnizca `docs/ONE_TIME_TASK_SCOUT.md` gorevini yap (tek seferlik), bitince bitis mesajini yaz ve dur. Etsy x2 ve Pinterest pin gorevleri TAMAMLANDI; tekrar yapma.
-> **DURUM (2026-10-24):** SCOUT verisi geldi (`docs/MARKET_RESEARCH.md`, `docs/data/`): depth map pazari kucuk, kazanan = MEGA BUNDLE. Kurucu karari: **B sonra A** = once 50'lik Noel depth map paketi (~$9.99, Kasim penceresi), sonra 500-1000'lik Mega Bundle. Kaynak gorsel: Higgsfield MCP (z_image 0.15 kr/gorsel; kurucu 10 kredi, free plan; ticari kullanim sarti DOGRULANMADI). Bulut ag izni: d8j0ntlcm91z4.cloudfront.net acildi -> uret/indir/isle bulutta otomatik. 4 Noel test gorseli basarili (isik izi %14-33 -> %3-5). Norse'a yeni yatirim yok.
+> **DURUM (2026-10-24):** Kurucu karari B sonra A. **50'lik Noel depth map paketi URETILDI** (Higgsfield z_image, 54 gorsel uretildi, 4 test dahil; 8 elendi/yenilendi; scratchpad xmas/out/_BUNDLE: kapak, katalog, 4 mockup, video, ilan metni $9.99, STANDARD+INVERTED ZIP ~120 MB'lik iki dosya). Teslim = Drive (Etsy 5x20 MB'a sigmaz). Bekleyen: kurucu ZIP'leri Drive'a yukleyip 'linki olan herkes' linkini verecek -> teslimat PDF'i -> yeni Etsy ilani. Higgsfield ucretsiz plan TICARI KULLANIM sarti dogrulanmadi (yayindan once kurucu kontrol etmeli). Higgsfield kredisi ~1.3 kaldi; kalan uretim kurucunun Gemini Pro/Nano Banana Pro ile.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
