@@ -58,3 +58,20 @@ Erişilemeyen: Etsy/EtsyHunt sayfalarının doğrudan okunması (bulut ağ polit
 - **Etsy Open API v3** (resmi): anahtar kelime → ilk 100 ilan → mağaza `transaction_sold_count`, ilan favori/yaş → satış hızı tahmini. `scout_engine.py` (D2 öne alındı). Gerekli: kurucunun ücretsiz Etsy geliştirici uygulaması (API anahtarı); çalıştırma kurucu PC'de veya bulut ağ izni (openapi.etsy.com).
 - **EverBee** (ücretsiz eklenti) ekran görüntüleri: hemen başlanabilir.
 - Mağaza "X sales" sayfaları + yorum hızı (yorum × ~10–20 ≈ satış, kaba).
+
+## GERÇEK VERİ — scout_engine ilk çalıştırma (2026-10-24, Etsy Open API; 12 kelime × 48 ilan = 576 ilan)
+Ham veri: `docs/data/scout_2026-10-24_*`. Satış = yorum / %8 (TAHMİN). Not: bazı fiyatlar USD değil (1200, 2850, 8000 = TRY/INR vb.) → scout_engine artık para birimini kaydeder.
+
+### Ana bulgular
+1. **Depth map pazarı küçük ve yoğunlaşmış.** İlanların ~%77'sinde hiç yorum yok. "coin depth map" ilk 48 ilanın toplam tahmini satışı ~41/ay; "16 bit depth map"in %97'si TEK ilandan.
+2. **Kazanan model = MEGA BUNDLE.** `1000+ Depth Maps Mega Bundle` (CoinCarveStudio, ~$60, 173 gün, 32 yorum ≈ ~400 satış ≈ ~70/ay) kategorinin açık ara lideri. Diğerleri: 700+ 16-bit + STL ($100, EclecticPNGArt), 1500+ 16-bit arşiv, 5500+ slate PNG ($60, ~12/ay). Kurucunun gözlemi doğrulandı.
+3. **Tekli depth map'ler zayıf:** iyi tekliler ayda ~2–9 satış (Star Wars X-Wing $5.99, BestOfEngraving coin $13 STL+PNG ~7/ay). 5'li Norse setimiz bu kategoride.
+4. **Geniş lazer dosya pazarı daha büyük ama dev mağazalarla dolu** (17K–58K satışlı mağazalar, $2.5–6): slate coaster, kesme tahtası, 3D illusion.
+5. **Satan temalar (yorum alan / genç kazananlar):** askeri–veteran–patriotik (3D illusion veteran ~22/ay), Noel/Santa (slate + challenge coin, 17–37 günlük ilanlar satıyor), viski/bourbon/BBQ (erkek hediyesi), funny/sarcastic, zodiac, highland cow, kafatası/taktik, dini.
+6. **Norse:** "viking laser file"da satanlar SVG kesim dosyaları (coaster seti, gemi); Norse depth map talebi zayıf.
+7. Rakiplerin bir kısmı telifli karakter kullanıyor (Star Wars, Michael Myers, Grinch) → biz KULLANMAYIZ (Etsy IP şikâyeti = mağaza riski).
+
+### Önerilen yön (kurucu kararı bekliyor)
+- **A) Depth Map Mega Bundle** (ana hamle): 500–1000 özgün, temalı depth map (askeri, Noel, kafatası, hayvan, dini, zodiac, Norse...), 8-bit PNG (+ seçili 16-bit/STL), Drive teslimi + önizleme kataloğu PDF. Fiyat $39–59 (giriş indirimi). Üretim: AI kaynak görsel + batch_factory (görsel başı ~30 sn).
+- **B) Temalı orta paketler** (hızlı nakit, sezon): "50 Christmas Coin & Coaster Depth Maps" ~$9.99; "50 Military/Veteran" ~$9.99. A'nın alt kümeleri → aynı üretimden çıkar.
+- **C) Mevcut 6 ilan** kalır (vitrin/arama çeşitliliği); Norse'a yeni yatırım yok.

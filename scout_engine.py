@@ -141,6 +141,7 @@ def scout_keyword(fetch: Fetch, kw: str, top: int, reviews: bool, review_rate: f
         est_sales = n_rev / review_rate if reviews else None
         out.append(dict(
             keyword=kw, rank=rank, listing_id=L.get("listing_id"), title=L.get("title", ""), price=price_usd(L),
+            currency=(L.get("price") or {}).get("currency_code", ""),
             designs=design_count(L.get("title", "")), favorites=int(L.get("num_favorers") or 0),
             views=L.get("views"), age_days=round(age_days), reviews=n_rev,
             est_sales=round(est_sales) if est_sales is not None else None,
@@ -149,12 +150,13 @@ def scout_keyword(fetch: Fetch, kw: str, top: int, reviews: bool, review_rate: f
             shop_reviews=int(shop.get("review_count") or 0), url=L.get("url", ""),
         ))
     monthly = [r["est_monthly"] for r in out if r["est_monthly"] is not None]
+    usd = [r for r in out if r["currency"] in ("USD", "")]          # fiyat medyani yalniz USD (TRY/INR karismasin)
     demand = sum(monthly) if monthly else sum(r["favorites"] for r in out) / max(len(out), 1)
     summary = dict(
         keyword=kw, results=count, sampled=len(out),
-        median_price=round(median([r["price"] for r in out]), 2),
+        median_price=round(median([r["price"] for r in usd]), 2),
         median_designs=median([r["designs"] for r in out]),
-        median_price_per_design=round(median([r["price"] / r["designs"] for r in out if r["price"]]), 2),
+        median_price_per_design=round(median([r["price"] / r["designs"] for r in usd if r["price"]]), 2),
         pct_with_reviews=round(100 * sum(r["reviews"] > 0 for r in out) / max(len(out), 1)),
         est_monthly_sales_top=round(demand, 1),
         median_shop_sales=median([r["shop_sales"] for r in out]),

@@ -292,7 +292,7 @@ def test_relief_stl_is_watertight(tmp_path):
 def test_scout_engine_with_fake_api():
     import scout_engine as se
     now = 1_800_000_000.0
-    listings = [dict(listing_id=i, shop_id=100 + i % 2, title=t, price=dict(amount=a, divisor=100), num_favorers=f,
+    listings = [dict(listing_id=i, shop_id=100 + i % 2, title=t, price=dict(amount=a, divisor=100, currency_code="USD"), num_favorers=f,
                      original_creation_timestamp=now - d * 86400)
                 for i, (t, a, f, d) in enumerate([("50 Coin Depth Maps Bundle", 999, 40, 60),
                                                   ("Eagle Coin Depth Map", 499, 10, 400),
