@@ -183,3 +183,9 @@ Sahip: **C** = Claude (kod, test, rapor) · **K** = Kurucu (hesap, yapıştırma
 - B4 ✅ kurucu onayı: 5 ürün delight ile yeniden üretildi, bundle ZIP'leri yenilendi (PDF aynı); `PNG_GUNCELLEME.zip` + `docs/ONE_TIME_TASK_PNG_SWAP.md` (yerel oturum değiştirecek).
 - B4 ✅ kurucu beyanı: 6 ilanın dijital dosyaları yerel oturumla değiştirildi (tekli 2 PNG, bundle 2 ZIP + PDF).
 - B3 ✅ `make_test_kit.py`: 1 tasarım (Standard + Inverted) + 1 sayfalık `Test_Guide.pdf` + `FEEDBACK_FORM.txt` (5 soru). Etsy teşvikli yorum yasağı gereği kit yorum/satın alma karşılığı değil; alıntı yalnız yazılı izinle. Kurucunun lazeri yok → dağıtım Faz C'de (topluluk kurallarına uygun, spam yok). Geri bildirim gelince B1 eşikleri/ayar önerileri gözden geçirilecek.
+
+**2026-10-24 — Faz C onaylandı.** Kurucu kararları: trafik **yalnız Pinterest**; YouTube/TikTok tüm işler bittikten sonra konuşulacak (C2 YouTube maddesi ertelendi). Pinterest hesabı yok → açılış rehberi.
+- C1 ✅ `traffic_cannon.py`: ürün başına 3 pin (Hero / Process / Materials) + bundle pini, 1000x1500; `pins.json` + `SOCIAL_CAPTIONS_READY.txt`; "mockup render" notu; metinde CNC/"calibrated" yok (kod + test).
+- C2 ✅ `pin_scheduler.py`: elle zamanlama takvimi (`PINTEREST_SCHEDULE.md`, ET + TR saati, günde 2, aynı ürün art arda yok), `links.json` (yalnız https etsy.com/etsy.me), opsiyonel toplu CSV (`--media-base-url`).
+- `docs/PINTEREST_SETUP.md`: hesap, panolar, haftalık rutin, yapma listesi, ölçüm. 13/13 test geçti.
+- Bekleyen: kurucudan 6 ilan linki; hesap açılışı. Sonra C5 (test kiti + topluluk şablonları), C6 (ölçüm tablosu).

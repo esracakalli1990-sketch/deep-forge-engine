@@ -210,3 +210,47 @@ def test_make_test_kit(tmp_path):
     form = (z.with_suffix("") / "FEEDBACK_FORM.txt").read_text(encoding="utf-8").lower()
     assert "not asked" in form and "review" in form and "calibrat" not in form     # tesvikli yorum yok
     assert run("make_test_kit.py", "--product", "99_Missing", "--outputs", str(tmp_path)).returncode == 1
+
+
+# --------------------------------------------------------------------------- #
+# Faz C1/C2: Pinterest pinleri + takvim
+# --------------------------------------------------------------------------- #
+def _image_product(root: Path, name: str) -> None:
+    d = root / name
+    d.mkdir(parents=True)
+    g = Image.fromarray(medallion(0, size=400, r=180)[0][..., 0])
+    g.save(d / f"{name}_3D_DepthMap_300DPI.png")
+    g.save(d / f"{name}_3D_DepthMap_INVERTED_300DPI.png")
+    for f in ("01_Wood_Mockup.jpg", "02_Brass_Mockup.jpg", "03_Slate_Coaster_Mockup.jpg"):
+        g.convert("RGB").save(d / f)
+
+
+def test_traffic_cannon_and_scheduler(tmp_path):
+    for n in ("01_Fenrir_Wolf", "02_Valkyrie_Warrior"):
+        _image_product(tmp_path, n)
+    r = run("traffic_cannon.py", "--outputs", str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    tdir = tmp_path / "_Traffic_Cannon"
+    pins = json.loads((tdir / "pins.json").read_text(encoding="utf-8"))
+    assert len(pins) == 6 and len({p["title"] for p in pins}) == 6
+    for p in pins:
+        with Image.open(tdir / p["file"]) as im:
+            assert im.size == (1000, 1500)
+        blob = (p["title"] + p["description"] + p["alt_text"]).lower()
+        assert "cnc" not in blob and "calibrat" not in blob
+        assert len(p["title"]) <= 100 and len(p["description"]) <= 500
+
+    links = tmp_path / "links.json"
+    links.write_text(json.dumps({"01_Fenrir_Wolf": "https://www.etsy.com/listing/123/fenrir"}))
+    r = run("pin_scheduler.py", "--outputs", str(tmp_path), "--links", str(links), "--start", "2026-11-02",
+            "--per-day", "2", "--media-base-url", "https://example.com/pins")
+    assert r.returncode == 0, r.stderr
+    rows = json.loads((tdir / "schedule.json").read_text(encoding="utf-8"))
+    assert [x["day"] for x in rows] == [1, 1, 2, 2, 3, 3]
+    assert all(a["product"] != b["product"] for a, b in zip(rows, rows[1:])), "ayni urun art arda"
+    assert {x["link"] for x in rows if x["product"] == "01_Fenrir_Wolf"} == {"https://www.etsy.com/listing/123/fenrir"}
+    assert {x["link"] for x in rows if x["product"] != "01_Fenrir_Wolf"} == {"https://forgedepthstudio.etsy.com"}
+    assert (tdir / "pinterest_bulk.csv").read_text(encoding="utf-8").count("\n") == 7
+
+    links.write_text(json.dumps({"01_Fenrir_Wolf": "http://evil.example.com/x"}))
+    assert run("pin_scheduler.py", "--outputs", str(tmp_path), "--links", str(links)).returncode == 1

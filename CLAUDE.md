@@ -1,7 +1,7 @@
 # CLAUDE.md — DEEP-FORGE / ForgeDepthStudio (kalici hafiza; kisa tutulur, detay docs/ altinda)
 
 > **YEREL OTURUM ISE:** Bekleyen tek seferlik Etsy gorevi YOK (`ONE_TIME_TASK_ETSY_UPDATE.md` ve `ONE_TIME_TASK_PNG_SWAP.md` TAMAMLANDI; tekrar yapma).
-> **DURUM (2026-10-24):** Faz B kodda TAMAM: B1 isik izi temizleme, B2 `docs/PROMPT_LIBRARY.md`, B4 canli 6 ilanin dijital dosyalari yenilendi (kullanici beyani), B3 `make_test_kit.py` (Fenrir kiti kurucuya gonderildi; testci yok, dagitim Faz C'de topluluk kurallarina uygun). Siradaki: Faz C, kurucu onayiyla.
+> **DURUM (2026-10-24):** Faz B TAMAM. Faz C onaylandi; kurucu karari: trafik YALNIZ Pinterest (YouTube/TikTok tum isler bittikten sonra konusulacak), Pinterest hesabi YOK (acilacak). C1 `traffic_cannon.py` (16 pin) + C2 `pin_scheduler.py` + `docs/PINTEREST_SETUP.md` kodda. Bekleyen: kurucudan 6 Etsy ilan linki (links.json), hesap acilisi; sonra C5 topluluk sablonlari, C6 olcum.
 
 Detay: `docs/DEEP_FORGE_MASTER_HANDOVER.md` (anayasa, tek gercek kaynagi) | `docs/TECH_CONTRACTS.md` (kod sozlesmeleri: depth map, isik modeli, ZIP/SEO kurallari). Kod degistirmeden once TECH_CONTRACTS'i oku.
 
@@ -24,8 +24,8 @@ Etsy `ForgeDepthStudio` (forgedepthstudio.etsy.com): kucuk lazer/CNC/DTF isletme
 4. Pazarlamada kanitlanamayan iddia yok ("calibrated" yok; makineye ozel Z-ekseni kalibrasyonu YAPMIYORUZ). **Lazer odakli konumlandirma (kurucu karari):** baslik/etiket/rozette CNC vaadi yok; CNC yalniz aciklamada durust uyari olarak. Testler (`tests/`) bunu zorlar.
 
 ## 4. Depo (bulut) ve kullanici PC'si
-- Kod: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`, `make_test_kit.py`; testler `tests/` (`python -m pytest -q`), CI `.github/workflows/ci.yml`. `inputs/ outputs/ *.mp4 *.zip bot_profile/ .env` git disi.
-- Kullanicinin `forge/` klasoru repo ile birebir ayni (2026-10-23). `traffic_cannon.py` HIC YAZILMAMIS (handover'daki "MEVCUT" bilgisi yanlis) -> Faz C'de kurallara uygun yazilacak.
+- Kod: `first_launch_builder.py` (cekirdek), `batch_factory.py`, `bundle_packager.py`, `seo_generator.py`, `make_listing_video.py`, `make_test_kit.py`, `traffic_cannon.py`, `pin_scheduler.py`; testler `tests/` (`python -m pytest -q`), CI `.github/workflows/ci.yml`. `inputs/ outputs/ *.mp4 *.zip bot_profile/ .env` git disi.
+- Kullanicinin `forge/` klasoru repo ile birebir ayni (2026-10-23). `traffic_cannon.py` 2026-10-24 sifirdan yazildi (yalniz Pinterest pinleri; dikey video yok).
 - **Gercek set (Etsy ekran goruntusuyle dogrulandi 2026-10-24):** 01_Fenrir_Wolf, 02_Valkyrie_Warrior, 03_Yggdrasil_Tree, 04_Thor_Mjolnir, 05_Odin_Allfather + bundle. Handover'daki "04 Vegvisir" YANLIS (4. urun Thor cekici). Canli ilanlar 2026-10-24'te yeni seo_generator ciktisi + yeni gorsellerle guncellendi.
 - Kullanici git/GitHub Desktop kullanmakta zorlaniyor: dosya alisverisi sohbete surukle-birak + SendUserFile ile.
 
@@ -34,5 +34,5 @@ Batch uyumlu, try/except, az bagimlilik (opencv, numpy, Pillow; reportlab PDF; f
 
 ## 6. Yol haritasi (yonetici durumu)
 Plan: `docs/AUDIT_AND_WORKPLAN.md`. Faz A (2026-10-23): A1 iddia temizligi, A2 Vegvisir/Yggdrasil SEO, A3 bundle Etsy teslimi + link korumasi, A5 testler/CI TAMAM (kodda). Canli 6 ilan guncellendi (kullanici beyani, 2026-10-24). Kullanicinin forge/ klasorundeki .py dosyalari eski olabilir (yeni surumler gonderildi; kopyalandigi teyit edilmedi).
-Faz B TAMAM (B3 kitinin geri bildirimi bekleniyor). Siradaki: Faz C (Pinterest toplu CSV/zamanlama, YouTube resmi yol, `traffic_cannon` sifirdan), Faz D.
-Bekleyen kurucu kararlari: Shorts otomasyonunun yontemi (API mi tarayici mi), scout_engine resmi kaynak onayi.
+Faz B TAMAM (B3 kitinin geri bildirimi bekleniyor). Faz C devam (Pinterest elle zamanlama; C1/C2 kodda). Sonra Faz D.
+Bekleyen kurucu kararlari: YouTube/Shorts (ertelendi, sona), scout_engine resmi kaynak onayi.
